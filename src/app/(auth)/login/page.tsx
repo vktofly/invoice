@@ -41,6 +41,11 @@ export default function LoginPage() {
               : undefined
           }
         />
+        <p className="mt-4 text-center text-sm">
+          <a href="/reset-password" className="text-indigo-600 hover:underline">
+            Forgot password?
+          </a>
+        </p>
       </div>
     </div>
   );
