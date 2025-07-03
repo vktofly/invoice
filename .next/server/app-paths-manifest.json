@@ -1,3 +1,7 @@
 {
-  "/api/invoices/route": "app/api/invoices/route.js"
+  "/page": "app/page.js",
+  "/invoices/page": "app/invoices/page.js",
+  "/invoices/new/page": "app/invoices/new/page.js",
+  "/api/customers/route": "app/api/customers/route.js",
+  "/api/invoices/next-number/route": "app/api/invoices/next-number/route.js"
 }

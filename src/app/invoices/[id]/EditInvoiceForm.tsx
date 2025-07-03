@@ -194,4 +194,4 @@ export default function EditInvoiceForm({ invoice }: Props) {
       </form>
     </div>
   );
-} 
+}

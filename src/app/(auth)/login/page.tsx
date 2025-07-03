@@ -20,8 +20,15 @@ export default function LoginPage() {
     // Listen to future sign-ins
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
+        // Ensure the user has a role
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && !user.user_metadata.role) {
+          await supabase.auth.updateUser({
+            data: { role: 'customer' }
+          });
+        }
         router.replace('/dashboard');
       }
     });

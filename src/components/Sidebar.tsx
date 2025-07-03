@@ -4,42 +4,60 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   HomeIcon,
-  DocumentTextIcon,
   UsersIcon,
   CubeIcon,
+  DocumentTextIcon,
+  CurrencyRupeeIcon,
+  ClipboardDocumentListIcon,
+  ReceiptPercentIcon,
+  BanknotesIcon,
+  ClockIcon,
   ChartBarIcon,
+  WrenchScrewdriverIcon,
   Cog6ToothIcon,
+  AdjustmentsHorizontalIcon,
 } from '@heroicons/react/24/outline';
+import React from 'react';
 
 const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+  { name: 'Home', href: '/dashboard', icon: HomeIcon },
+  { name: 'Customers', href: '/customers', icon: UsersIcon },
+  { name: 'Items', href: '/items', icon: CubeIcon },
+  { name: 'Quotes', href: '/quotes', icon: ClipboardDocumentListIcon },
+  { name: 'Delivery Challans', href: '/challans', icon: ReceiptPercentIcon },
   { name: 'Invoices', href: '/invoices', icon: DocumentTextIcon },
-  { name: 'Clients', href: '/clients', icon: UsersIcon },
-  { name: 'Products', href: '/products', icon: CubeIcon },
+  { name: 'Payments Received', href: '/payments', icon: CurrencyRupeeIcon },
+  { name: 'Expenses', href: '/expenses', icon: BanknotesIcon },
+  { name: 'Time Tracking', href: '/timetracking', icon: ClockIcon },
   { name: 'Reports', href: '/reports', icon: ChartBarIcon },
+  { name: 'Advanced Billing', href: '/advanced-billing', icon: WrenchScrewdriverIcon },
+  { name: 'Configure Features', href: '/features', icon: AdjustmentsHorizontalIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r bg-white p-4 shadow-sm lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r bg-white p-4 shadow-sm lg:flex">
       <div className="mb-6 text-xl font-bold text-indigo-600">InvoiceApp</div>
       <nav className="flex flex-1 flex-col gap-1 text-sm font-medium">
-        {navItems.map((item) => {
-          const active = pathname?.startsWith(item.href);
+        {navItems.map((item, idx) => {
           const Icon = item.icon;
+          const active = pathname?.startsWith(item.href);
+          const dividerAfter = [0, 2, 5, 7, 9, 11].includes(idx);
           return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center gap-3 rounded px-3 py-2 hover:bg-indigo-50 ${
-                active ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'
-              }`}
-            >
-              <Icon className="h-5 w-5" />
-              {item.name}
-            </Link>
+            <React.Fragment key={item.name}>
+              <Link
+                href={item.href}
+                className={`flex items-center gap-3 rounded px-3 py-2 hover:bg-indigo-50 ${
+                  active ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                {item.name}
+              </Link>
+              {dividerAfter && <div className="my-2 border-t" />}
+            </React.Fragment>
           );
         })}
       </nav>

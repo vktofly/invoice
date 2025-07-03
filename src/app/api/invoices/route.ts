@@ -83,6 +83,21 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(invoice, { status: 201 });
 }
 
+export async function GET_NEXT_NUMBER() {
+  const supabase = supabaseServer();
+  const { data: maxData } = await supabase
+    .from('invoices')
+    .select('number')
+    .order('number', { ascending: false })
+    .limit(1);
+  let nextNumber = 1;
+  if (maxData && maxData.length > 0 && !isNaN(Number(maxData[0].number))) {
+    nextNumber = Number(maxData[0].number) + 1;
+  }
+  const number = String(nextNumber).padStart(5, '0');
+  return NextResponse.json({ number });
+}
+
 type ItemPayload = {
   description: string;
   quantity: number;
