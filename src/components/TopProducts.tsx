@@ -30,7 +30,7 @@ export default function TopProducts() {
   }, []);
 
   return (
-    <div className="rounded-lg border bg-white p-4 shadow-sm">
+    <div className="max-w-5xl mx-auto w-full px-0 py-0">
       <h2 className="text-lg font-semibold">Top Products / Services</h2>
       <table className="mt-4 w-full text-sm">
         <thead>

@@ -51,11 +51,13 @@ export default function OrganizationSetup() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value, type } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }));
   };
 
@@ -84,169 +86,171 @@ export default function OrganizationSetup() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-8 bg-white rounded shadow mt-8">
-      <h1 className="text-2xl font-bold mb-2">Organization Setup</h1>
-      <p className="mb-6 text-gray-600">Enter your organization details to get started.</p>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Organization Name */}
-        <div>
-          <label className="block font-medium mb-1">Organization Name<span className="text-red-500">*</span></label>
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            required
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
-            placeholder="Enter organization name"
-          />
-        </div>
-        {/* Industry */}
-        <div>
-          <label className="block font-medium mb-1">Industry<span className="text-red-500">*</span></label>
-          <select
-            name="industry"
-            value={form.industry}
-            onChange={handleChange}
-            required
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
-          >
-            <option value="">Select Industry</option>
-            {industries.map((ind) => (
-              <option key={ind} value={ind}>{ind}</option>
-            ))}
-          </select>
-        </div>
-        {/* Location and State */}
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <label className="block font-medium mb-1">Organization Location<span className="text-red-500">*</span></label>
-            <select
-              name="country"
-              value={form.country}
+    <div className="max-w-7xl mx-auto bg-transparent p-0">
+      <div className="max-w-5xl mx-auto w-full px-0 py-0">
+        <h1 className="text-2xl font-bold mb-2">Organization Setup</h1>
+        <p className="mb-6 text-gray-600">Enter your organization details to get started.</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Organization Name */}
+          <div>
+            <label className="block font-medium mb-1">Organization Name<span className="text-red-500">*</span></label>
+            <input
+              name="name"
+              value={form.name}
               onChange={handleChange}
               required
               className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
-            >
-              {countries.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className="block font-medium mb-1">State/Union Territory<span className="text-red-500">*</span></label>
-            <select
-              name="state"
-              value={form.state}
-              onChange={handleChange}
-              required
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
-            >
-              <option value="">Select State</option>
-              {form.country === "India" && statesIndia.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {/* Add Organization Address */}
-        <div>
-          <button
-            type="button"
-            className="text-blue-600 flex items-center gap-1 text-sm"
-            onClick={() => setShowAddress((v) => !v)}
-          >
-            <span className="text-xl leading-none">+</span> Add Organization Address
-          </button>
-          {showAddress && (
-            <textarea
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-              className="w-full border rounded px-3 py-2 mt-2 focus:outline-none focus:ring"
-              placeholder="Enter organization address"
-              rows={2}
+              placeholder="Enter organization name"
             />
-          )}
-        </div>
-        {/* Currency and Language */}
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <label className="block font-medium mb-1">Currency<span className="text-red-500">*</span></label>
+          </div>
+          {/* Industry */}
+          <div>
+            <label className="block font-medium mb-1">Industry<span className="text-red-500">*</span></label>
             <select
-              name="currency"
-              value={form.currency}
+              name="industry"
+              value={form.industry}
               onChange={handleChange}
               required
               className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
             >
-              {currencies.map((c) => (
-                <option key={c.code} value={c.code}>{c.label}</option>
+              <option value="">Select Industry</option>
+              {industries.map((ind) => (
+                <option key={ind} value={ind}>{ind}</option>
               ))}
             </select>
           </div>
-          <div className="flex-1">
-            <label className="block font-medium mb-1">Language<span className="text-red-500">*</span></label>
+          {/* Location and State */}
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block font-medium mb-1">Organization Location<span className="text-red-500">*</span></label>
+              <select
+                name="country"
+                value={form.country}
+                onChange={handleChange}
+                required
+                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+              >
+                {countries.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block font-medium mb-1">State/Union Territory<span className="text-red-500">*</span></label>
+              <select
+                name="state"
+                value={form.state}
+                onChange={handleChange}
+                required
+                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+              >
+                <option value="">Select State</option>
+                {form.country === "India" && statesIndia.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {/* Add Organization Address */}
+          <div>
+            <button
+              type="button"
+              className="text-blue-600 flex items-center gap-1 text-sm"
+              onClick={() => setShowAddress((v) => !v)}
+            >
+              <span className="text-xl leading-none">+</span> Add Organization Address
+            </button>
+            {showAddress && (
+              <textarea
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2 mt-2 focus:outline-none focus:ring"
+                placeholder="Enter organization address"
+                rows={2}
+              />
+            )}
+          </div>
+          {/* Currency and Language */}
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block font-medium mb-1">Currency<span className="text-red-500">*</span></label>
+              <select
+                name="currency"
+                value={form.currency}
+                onChange={handleChange}
+                required
+                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+              >
+                {currencies.map((c) => (
+                  <option key={c.code} value={c.code}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block font-medium mb-1">Language<span className="text-red-500">*</span></label>
+              <select
+                name="language"
+                value={form.language}
+                onChange={handleChange}
+                required
+                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+              >
+                {languages.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {/* Time Zone */}
+          <div>
+            <label className="block font-medium mb-1">Time Zone<span className="text-red-500">*</span></label>
             <select
-              name="language"
-              value={form.language}
+              name="timezone"
+              value={form.timezone}
               onChange={handleChange}
               required
               className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
             >
-              {languages.map((l) => (
-                <option key={l} value={l}>{l}</option>
+              {timezones.map((tz) => (
+                <option key={tz} value={tz}>{tz}</option>
               ))}
             </select>
           </div>
-        </div>
-        {/* Time Zone */}
-        <div>
-          <label className="block font-medium mb-1">Time Zone<span className="text-red-500">*</span></label>
-          <select
-            name="timezone"
-            value={form.timezone}
-            onChange={handleChange}
-            required
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+          {/* GST Toggle */}
+          <div className="flex items-center gap-2">
+            <label className="font-medium">Is this business registered for GST?</label>
+            <input
+              type="checkbox"
+              name="gst"
+              checked={form.gst}
+              onChange={handleChange}
+              className="toggle-checkbox"
+            />
+            <span>{form.gst ? "Yes" : "No"}</span>
+          </div>
+          {/* Invoicing Method */}
+          <div>
+            <label className="block font-medium mb-1">How are you managing invoicing currently?</label>
+            <input
+              name="invoicing"
+              value={form.invoicing}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+              placeholder="e.g., Excel, Tally, Manual, etc."
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 mt-4"
+            disabled={loading}
           >
-            {timezones.map((tz) => (
-              <option key={tz} value={tz}>{tz}</option>
-            ))}
-          </select>
-        </div>
-        {/* GST Toggle */}
-        <div className="flex items-center gap-2">
-          <label className="font-medium">Is this business registered for GST?</label>
-          <input
-            type="checkbox"
-            name="gst"
-            checked={form.gst}
-            onChange={handleChange}
-            className="toggle-checkbox"
-          />
-          <span>{form.gst ? "Yes" : "No"}</span>
-        </div>
-        {/* Invoicing Method */}
-        <div>
-          <label className="block font-medium mb-1">How are you managing invoicing currently?</label>
-          <input
-            name="invoicing"
-            value={form.invoicing}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
-            placeholder="e.g., Excel, Tally, Manual, etc."
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 mt-4"
-          disabled={loading}
-        >
-          {loading ? "Saving..." : "Save"}
-        </button>
-        {message && <div className="text-green-600 mt-2">{message}</div>}
-        {error && <div className="text-red-600 mt-2">{error}</div>}
-      </form>
+            {loading ? "Saving..." : "Save"}
+          </button>
+          {message && <div className="text-green-600 mt-2">{message}</div>}
+          {error && <div className="text-red-600 mt-2">{error}</div>}
+        </form>
+      </div>
     </div>
   );
 }

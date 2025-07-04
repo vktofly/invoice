@@ -1,6 +1,8 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import supabase from '@/lib/supabase/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+
+
 
 /**
  * Props interface for the InvoicesPage component.
@@ -21,8 +23,6 @@ export default async function InvoicesPage({ searchParams }: Props) {
   const customer = searchParams?.customer as string | undefined;
 
   // Get a Supabase server client
-  const supabase = supabaseServer();
-  // Build the query for invoices, ordering by issue_date descending
   let query = supabase
     .from('invoices')
     .select('id, number, total, status, issue_date, due_date')
