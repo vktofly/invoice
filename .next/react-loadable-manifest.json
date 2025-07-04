@@ -14,5 +14,53 @@
   "..\\node_modules\\@supabase\\storage-js\\dist\\module\\lib\\helpers.js -> @supabase/node-fetch": {
     "id": "..\\node_modules\\@supabase\\storage-js\\dist\\module\\lib\\helpers.js -> @supabase/node-fetch",
     "files": []
+  },
+  "app\\dashboard\\page.tsx -> @/components/CustomerDashboard": {
+    "id": "app\\dashboard\\page.tsx -> @/components/CustomerDashboard",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_CustomerDashboard_tsx.js"
+    ]
+  },
+  "app\\dashboard\\page.tsx -> @/components/VendorDashboard": {
+    "id": "app\\dashboard\\page.tsx -> @/components/VendorDashboard",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_VendorDashboard_tsx.js"
+    ]
+  },
+  "components\\VendorDashboard.tsx -> ./DashboardStats": {
+    "id": "components\\VendorDashboard.tsx -> ./DashboardStats",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_DashboardStats_tsx.js"
+    ]
+  },
+  "components\\VendorDashboard.tsx -> ./OutstandingAgingChart": {
+    "id": "components\\VendorDashboard.tsx -> ./OutstandingAgingChart",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_OutstandingAgingChart_tsx.js"
+    ]
+  },
+  "components\\VendorDashboard.tsx -> ./RecentInvoices": {
+    "id": "components\\VendorDashboard.tsx -> ./RecentInvoices",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_RecentInvoices_tsx.js"
+    ]
+  },
+  "components\\VendorDashboard.tsx -> ./RevenueTrendChart": {
+    "id": "components\\VendorDashboard.tsx -> ./RevenueTrendChart",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_RevenueTrendChart_tsx.js"
+    ]
+  },
+  "components\\VendorDashboard.tsx -> ./TopCustomers": {
+    "id": "components\\VendorDashboard.tsx -> ./TopCustomers",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_TopCustomers_tsx.js"
+    ]
+  },
+  "components\\VendorDashboard.tsx -> ./TopProducts": {
+    "id": "components\\VendorDashboard.tsx -> ./TopProducts",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_TopProducts_tsx.js"
+    ]
   }
 }

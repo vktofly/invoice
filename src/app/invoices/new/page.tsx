@@ -46,18 +46,6 @@ export default function NewInvoicePage() {
   // --- Customer selection and search state ---
   // List of all customers fetched from backend
   const [customers, setCustomers] = useState<{ id: string; email: string; name?: string }[]>([]);
-  // The current search string in the customer input
-  const [customerSearch, setCustomerSearch] = useState('');
-  // Dropdown and modal state for customer selection
-  const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
-  const customerInputRef = useRef<HTMLInputElement>(null);
-  // Modal state for adding a new customer
-  const [showAddCustomer, setShowAddCustomer] = useState(false);
-  // New customer form state
-  const [newCustomer, setNewCustomer] = useState({ name: '', email: '' });
-  const [addingCustomer, setAddingCustomer] = useState(false);
-  // Keyboard navigation for dropdown
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   // --- Miscellaneous UI state ---
   const [isEditingNumber, setIsEditingNumber] = useState(false);
@@ -86,6 +74,11 @@ export default function NewInvoicePage() {
   const [currency, setCurrency] = useState('INR');
   const currencySymbol = CURRENCY_OPTIONS.find(c => c.code === currency)?.symbol || '$';
 
+  // --- Add state for showing the add customer modal and for the new customer form
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({ name: '', email: '' });
+  const [addingCustomer, setAddingCustomer] = useState(false);
+
   // --- Fetch customers and next invoice number on mount ---
   useEffect(() => {
     // Fetch customers with 'customer' role from backend
@@ -109,43 +102,40 @@ export default function NewInvoicePage() {
     fetchNextNumber();
   }, []);
 
-  // --- Close dropdown/modal when clicking outside ---
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      // Close if click is outside the input or dropdown/modal
-      if (
-        customerInputRef.current &&
-        !customerInputRef.current.contains(event.target as Node)
-      ) {
-        setCustomerDropdownOpen(false);
-        setShowAddCustomer(false);
-      }
-      const dropdown = document.querySelector('.customer-dropdown');
-      if (dropdown && !dropdown.contains(event.target as Node)) {
-        setCustomerDropdownOpen(false);
-        setShowAddCustomer(false);
-      }
-    }
-    if (customerDropdownOpen || showAddCustomer) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [customerDropdownOpen, showAddCustomer]);
-
   // --- Form field change handlers ---
   // For text/textarea fields
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => {
+      // If issue_date changes and a Net term is selected, recalculate due_date
+      if (name === 'issue_date' && prev.payment_terms && prev.payment_terms.startsWith('Net ')) {
+        const days = parseInt(prev.payment_terms.replace('Net ', ''));
+        return { ...prev, issue_date: value, due_date: addDays(value, days) };
+      }
+      // If due_date is changed manually and payment_terms is Net N or Due on Receipt, set payment_terms to Custom
+      if (name === 'due_date' && (prev.payment_terms && (prev.payment_terms.startsWith('Net ') || prev.payment_terms === 'Due on Receipt'))) {
+        return { ...prev, due_date: value, payment_terms: 'Custom' };
+      }
+      return { ...prev, [name]: value };
+    });
   };
   // For select fields
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => {
+      // If payment_terms changes, update due_date accordingly
+      if (name === 'payment_terms') {
+        if (value.startsWith('Net ')) {
+          const days = parseInt(value.replace('Net ', ''));
+          return { ...prev, payment_terms: value, due_date: addDays(prev.issue_date, days) };
+        } else if (value === 'Due on Receipt') {
+          return { ...prev, payment_terms: value, due_date: prev.issue_date };
+        } else {
+          return { ...prev, payment_terms: value };
+        }
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   // --- Invoice totals calculation ---
@@ -207,346 +197,407 @@ export default function NewInvoicePage() {
     router.push(`/invoices/${invoice.id}`);
   };
 
-  // --- Add new customer handler ---
-  // Calls backend to create a new customer, then selects it
-  const handleAddCustomer = async () => {
-    setAddingCustomer(true);
-    const res = await fetch('/api/customers', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newCustomer),
-    });
-    setAddingCustomer(false);
-    if (res.ok) {
-      const data = await res.json();
-      setCustomers((prev) => [...prev, data.customer]);
-      setForm((prev) => ({ ...prev, customer_id: data.customer.id }));
-      setCustomerSearch(data.customer.name ? data.customer.name : data.customer.email);
-      programmaticCustomerSetRef.current = true;
-      setShowAddCustomer(false);
-      setCustomerDropdownOpen(false);
-      setNewCustomer({ name: '', email: '' });
-      setHighlightedIndex(-1);
-    } else {
-      alert('Failed to add customer');
-    }
-  };
-
-  // Add a flag to distinguish programmatic vs user input
-  const programmaticCustomerSetRef = useRef(false);
+  // Helper to add days to a date string (YYYY-MM-DD)
+  function addDays(dateStr: string, days: number) {
+    const date = new Date(dateStr);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().substr(0, 10);
+  }
 
   return (
-    <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">New Invoice</h1>
-      <form onSubmit={(e) => handleSubmit(e, 'draft')} className="space-y-4">
-        <div className="mb-4 relative">
-          <label className="block text-sm mb-1">Customer</label>
-          <input
-            type="text"
-            ref={customerInputRef}
-            placeholder="Search or select customer by name or email"
-            value={customerSearch}
-            onChange={e => {
-              setCustomerSearch(e.target.value);
-              setCustomerDropdownOpen(true);
-              setHighlightedIndex(-1);
-              // Only clear selection if this is a user-typed change
-              if (!programmaticCustomerSetRef.current) {
-                setForm(prev => ({ ...prev, customer_id: '' }));
-              }
-              programmaticCustomerSetRef.current = false;
-            }}
-            onFocus={() => setCustomerDropdownOpen(true)}
-            className="w-full border px-3 py-2 rounded"
-            autoComplete="off"
-            onKeyDown={e => {
-              if (!customerDropdownOpen) return;
-              const filtered = customers.filter(c =>
-                c.email.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                (c.name && c.name.toLowerCase().includes(customerSearch.toLowerCase()))
-              );
-              if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setHighlightedIndex(idx => Math.min(idx + 1, filtered.length - 1));
-              } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setHighlightedIndex(idx => Math.max(idx - 1, 0));
-              } else if (e.key === 'Enter') {
-                if (highlightedIndex >= 0 && highlightedIndex < filtered.length) {
-                  const c = filtered[highlightedIndex];
-                  setForm(prev => ({ ...prev, customer_id: c.id }));
-                  setCustomerSearch(c.name ? c.name : c.email);
-                  programmaticCustomerSetRef.current = true;
-                  setCustomerDropdownOpen(false);
-                  setHighlightedIndex(-1);
-                }
-              } else if (e.key === 'Escape') {
-                setCustomerDropdownOpen(false);
-                setHighlightedIndex(-1);
-              }
-            }}
-          />
-          {customerDropdownOpen && (
-            <div className="customer-dropdown absolute z-10 w-full bg-white border rounded shadow max-h-48 overflow-y-auto">
-              {customers
-                .filter(c =>
-                  c.email.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                  (c.name && c.name.toLowerCase().includes(customerSearch.toLowerCase()))
-                )
-                .map((c, i) => (
-                  <div
-                    key={c.id}
-                    className={`px-3 py-2 cursor-pointer hover:bg-indigo-100 ${form.customer_id === c.id ? 'bg-indigo-50' : ''} ${highlightedIndex === i ? 'bg-indigo-200' : ''}`}
-                    onClick={() => {
-                      setForm(prev => ({ ...prev, customer_id: c.id }));
-                      setCustomerSearch(c.name ? c.name : c.email);
-                      programmaticCustomerSetRef.current = true;
-                      setCustomerDropdownOpen(false);
-                      setHighlightedIndex(-1);
-                    }}
+    <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-lg p-0 flex flex-col md:flex-row">
+        {/* Left: Form Section */}
+        <div className="flex-1 p-8">
+          <h1 className="text-3xl font-bold mb-8 text-gray-800">New Invoice</h1>
+          <form onSubmit={(e) => handleSubmit(e, 'draft')} className="space-y-4">
+            <div className="mb-4">
+              <label className="block text-base font-medium mb-1 text-gray-800">
+                Customer <span className="text-red-500">*</span>
+              </label>
+              <div className="flex gap-2 items-center">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1 0 6.5 6.5a7.5 7.5 0 0 0 10.6 10.6Z"/></svg>
+                  </span>
+                  <select
+                    name="customer_id"
+                    value={form.customer_id}
+                    onChange={e => handleSelectChange(e)}
+                    className="w-full border px-10 py-3 rounded text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                    required
                   >
-                    {c.name ? `${c.name} (${c.email})` : c.email}
-                  </div>
-                ))}
-              <div className="px-3 py-2 cursor-pointer text-blue-600 hover:underline" onClick={() => setShowAddCustomer(true)}>
-                + Add New Customer
+                    <option value="">Search or select customer</option>
+                    {customers.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name ? `${c.name} (${c.email})` : c.email}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 text-sm font-medium flex items-center gap-1"
+                  onClick={() => setShowAddCustomer(true)}
+                >
+                  <span className="text-lg">+</span> Add New Customer
+                </button>
               </div>
-              {customers.filter(c =>
-                c.email.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                (c.name && c.name.toLowerCase().includes(customerSearch.toLowerCase()))
-              ).length === 0 && !showAddCustomer && (
-                <div className="px-3 py-2 text-gray-500">No customers found</div>
+              {showAddCustomer && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+                  <div className="bg-white rounded shadow p-6 w-full max-w-sm">
+                    <h3 className="font-semibold mb-2">Add New Customer</h3>
+                    <input
+                      type="text"
+                      placeholder="Name"
+                      className="w-full border px-3 py-2 rounded mb-2"
+                      value={newCustomer.name}
+                      onChange={e => setNewCustomer(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      className="w-full border px-3 py-2 rounded mb-2"
+                      value={newCustomer.email}
+                      onChange={e => setNewCustomer(prev => ({ ...prev, email: e.target.value }))}
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        type="button"
+                        className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+                        onClick={async () => {
+                          setAddingCustomer(true);
+                          const res = await fetch('/api/customers', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(newCustomer),
+                          });
+                          setAddingCustomer(false);
+                          if (res.ok) {
+                            const data = await res.json();
+                            setCustomers(prev => [...prev, data.customer]);
+                            setForm(prev => ({ ...prev, customer_id: data.customer.id }));
+                            setShowAddCustomer(false);
+                            setNewCustomer({ name: '', email: '' });
+                          } else {
+                            alert('Failed to add customer');
+                          }
+                        }}
+                        disabled={addingCustomer || !newCustomer.email}
+                      >
+                        {addingCustomer ? 'Adding…' : 'Add Customer'}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300"
+                        onClick={() => setShowAddCustomer(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
-          )}
-          {showAddCustomer && (
-            <div className="customer-dropdown absolute z-20 w-full bg-white border rounded shadow p-4 mt-2">
-              <h3 className="font-semibold mb-2">Add New Customer</h3>
-              <input
-                type="text"
-                placeholder="Name"
-                className="w-full border px-3 py-2 rounded mb-2"
-                value={newCustomer.name}
-                onChange={e => setNewCustomer(prev => ({ ...prev, name: e.target.value }))}
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                className="w-full border px-3 py-2 rounded mb-2"
-                value={newCustomer.email}
-                onChange={e => setNewCustomer(prev => ({ ...prev, email: e.target.value }))}
-              />
-              <div className="flex gap-2">
+            <div className="mt-2">
+              <button
+                type="button"
+                className="flex items-center gap-2 text-blue-600 hover:underline text-sm mb-1"
+                onClick={() => setShowTerms((v) => !v)}
+              >
+                <span>+ Add Terms and conditions</span>
+              </button>
+              {showTerms && (
+                <textarea
+                  className="w-full border px-3 py-2 rounded mb-2"
+                  placeholder="Enter terms and conditions"
+                  value={terms}
+                  onChange={e => setTerms(e.target.value)}
+                />
+              )}
+              <button
+                type="button"
+                className="flex items-center gap-2 text-blue-600 hover:underline text-sm mb-1"
+                onClick={() => setShowPaymentGateway((v) => !v)}
+              >
+                <span>+ Add Payment Gateway</span>
+              </button>
+              {showPaymentGateway && (
+                <div className="w-full border px-3 py-2 rounded mb-2 text-gray-500 bg-gray-50">
+                  Payment gateway integration coming soon.
+                </div>
+              )}
+            </div>
+            {/* Invoice Details Row with Currency Selector */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6 bg-gray-50 rounded-lg p-4 border-b border-gray-200">
+              {/* Currency Selector */}
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-sm font-medium mb-1 text-gray-800">Currency</label>
+                <select
+                  name="currency"
+                  value={currency}
+                  onChange={e => setCurrency(e.target.value)}
+                  className="w-full border px-3 py-2 rounded text-base bg-white"
+                >
+                  {CURRENCY_OPTIONS.map(opt => (
+                    <option key={opt.code} value={opt.code}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              {/* Invoice Number */}
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-sm font-medium mb-1 text-gray-800">
+                  Invoice Number <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    name="number"
+                    value={form.number}
+                    onChange={handleChange}
+                    className="w-full border px-3 py-2 rounded text-base bg-white"
+                    readOnly={!isEditingNumber}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingNumber((v) => !v)}
+                    className="rounded bg-gray-200 px-2 py-1 text-sm hover:bg-gray-300"
+                    title={isEditingNumber ? 'Lock' : 'Edit'}
+                  >
+                    {isEditingNumber ? (
+                      <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M5 12V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5M12 16v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Z"/></svg>
+                    ) : (
+                      <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M16.862 5.487a2.06 2.06 0 0 1 2.916 2.914l-9.375 9.375a2 2 0 0 1-.707.464l-3.11 1.037a.5.5 0 0 1-.632-.632l1.037-3.11a2 2 0 0 1 .464-.707l9.375-9.375Z"/></svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+              {/* Issue Date */}
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-sm font-medium mb-1 text-gray-800">
+                  Issue Date <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M8 7V3m8 4V3M3 11h18M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"/></svg>
+                  </span>
+                  <input
+                    type="date"
+                    name="issue_date"
+                    value={form.issue_date}
+                    onChange={handleChange}
+                    className="w-full border px-10 py-2 rounded text-base bg-white"
+                    required
+                  />
+                </div>
+              </div>
+              {/* Terms */}
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-sm font-medium mb-1 text-gray-800">Terms</label>
+                <select
+                  name="payment_terms"
+                  value={form.payment_terms}
+                  onChange={handleSelectChange}
+                  className="w-full border px-3 py-2 rounded text-base bg-white"
+                >
+                  <option value="">Select terms</option>
+                  {TERMS_OPTIONS.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {form.payment_terms && !TERMS_OPTIONS.includes(form.payment_terms) && (
+                  <input
+                    type="text"
+                    placeholder="Enter custom terms"
+                    value={form.payment_terms}
+                    onChange={e => setForm(prev => ({ ...prev, payment_terms: e.target.value }))}
+                    className="w-full border px-3 py-2 rounded mt-2 text-base bg-white"
+                  />
+                )}
+              </div>
+              {/* Due Date */}
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-sm font-medium mb-1 text-gray-800">
+                  Due Date <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M8 7V3m8 4V3M3 11h18M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"/></svg>
+                  </span>
+                  <input
+                    type="date"
+                    name="due_date"
+                    value={form.due_date}
+                    onChange={handleChange}
+                    className="w-full border px-10 py-2 rounded text-base bg-white"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            {/* Item Table Section */}
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-medium">Item Table</h2>
+              </div>
+              <div className="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
+                <div className="min-w-[900px]">
+                  <div className="grid grid-cols-7 gap-2 font-semibold text-xs mb-1 bg-gray-50 rounded-t-lg border-b border-gray-200">
+                    <div className="col-span-2 py-3 px-2">Item Details</div>
+                    <div className="py-3 px-2 text-right">Quantity</div>
+                    <div className="py-3 px-2 text-right">Price</div>
+                    <div className="py-3 px-2 text-right">Tax</div>
+                    <div className="py-3 px-2 text-right">Tax Amount</div>
+                    <div className="py-3 px-2 text-right">Total</div>
+                    <div></div>
+                  </div>
+                  {items.length === 0 && <p className="text-sm text-gray-500 px-2 py-4">No items yet.</p>}
+                  {items.map((item, idx) => {
+                    const taxAmount = item.quantity * item.unit_price * item.tax_rate / 100;
+                    const rowTotal = (item.quantity * item.unit_price) + taxAmount;
+                    return (
+                      <div
+                        key={idx}
+                        className={`mb-2 grid grid-cols-7 gap-2 items-center rounded-lg ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} border-b border-gray-100`}
+                      >
+                        <input
+                          placeholder="Description"
+                          className="col-span-2 rounded border px-2 py-2 my-2 focus:ring-2 focus:ring-blue-500"
+                          value={item.description}
+                          onChange={(e) => updateItem(idx, 'description', e.target.value)}
+                        />
+                        <input
+                          type="number"
+                          placeholder="Qty"
+                          className="rounded border px-2 py-2 my-2 text-right focus:ring-2 focus:ring-blue-500"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(idx, 'quantity', e.target.value)}
+                          min={1}
+                        />
+                        <div className="relative flex items-center">
+                          <span className="absolute left-2 text-gray-500 text-sm">{currencySymbol}</span>
+                          <input
+                            type="number"
+                            placeholder="Price"
+                            step="0.01"
+                            className="rounded border px-2 py-2 pl-6 w-full my-2 text-right focus:ring-2 focus:ring-blue-500"
+                            value={item.unit_price}
+                            onChange={(e) => updateItem(idx, 'unit_price', e.target.value)}
+                            min={0}
+                          />
+                        </div>
+                        <div className="relative flex items-center">
+                          <input
+                            type="number"
+                            placeholder="Tax"
+                            step="0.01"
+                            className="rounded border px-2 py-2 pr-6 w-full my-2 text-right focus:ring-2 focus:ring-blue-500"
+                            value={item.tax_rate}
+                            onChange={(e) => updateItem(idx, 'tax_rate', e.target.value)}
+                            min={0}
+                          />
+                          <span className="absolute right-2 text-gray-500 text-sm">%</span>
+                        </div>
+                        <div className="relative flex items-center">
+                          <input
+                            type="text"
+                            className="rounded border px-2 py-2 bg-gray-100 text-right w-full my-2"
+                            value={`${currencySymbol}${taxAmount.toFixed(2)}`}
+                            readOnly
+                            tabIndex={-1}
+                            aria-label="Tax Amount"
+                          />
+                        </div>
+                        <div className="relative flex items-center">
+                          <input
+                            type="text"
+                            className="rounded border px-2 py-2 bg-gray-100 text-right w-full my-2"
+                            value={`${currencySymbol}${rowTotal.toFixed(2)}`}
+                            readOnly
+                            tabIndex={-1}
+                            aria-label="Row Total"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(idx)}
+                          className="rounded border border-red-300 px-2 py-1 text-red-500 hover:bg-red-50 hover:border-red-500 transition"
+                          title="Remove item"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
                 <button
                   type="button"
-                  className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-                  onClick={handleAddCustomer}
-                  disabled={addingCustomer || !newCustomer.email}
+                  onClick={addItem}
+                  className="rounded border border-blue-500 text-blue-600 px-4 py-2 text-sm font-medium bg-white hover:bg-blue-50 transition"
                 >
-                  {addingCustomer ? 'Adding…' : 'Add Customer'}
+                  + Add New Row
                 </button>
                 <button
                   type="button"
-                  className="rounded bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300"
-                  onClick={() => setShowAddCustomer(false)}
+                  className="rounded border border-blue-500 text-blue-600 px-4 py-2 text-sm font-medium bg-white hover:bg-blue-50 transition"
+                  onClick={e => { e.preventDefault(); alert('Bulk add not implemented yet.'); }}
                 >
-                  Cancel
+                  + Add Items in Bulk
                 </button>
               </div>
             </div>
-          )}
-        </div>
-        <div className="flex gap-4 items-end mb-2">
-          <div className="flex-1">
-            <label className="block text-sm mb-1">Currency</label>
-            <select
-              name="currency"
-              value={currency}
-              onChange={e => setCurrency(e.target.value)}
-              className="w-full border px-3 py-2 rounded"
-            >
-              {CURRENCY_OPTIONS.map(opt => (
-                <option key={opt.code} value={opt.code}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <label className="block text-sm mb-1">Issue Date</label>
-            <input
-              type="date"
-              name="issue_date"
-              value={form.issue_date}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-              required
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm mb-1">Terms</label>
-            <select
-              name="payment_terms"
-              value={TERMS_OPTIONS.includes(form.payment_terms) ? form.payment_terms : 'Custom'}
-              onChange={e => {
-                const value = e.target.value;
-                if (value === 'Custom') {
-                  setCustomTerms(form.payment_terms);
-                }
-                setForm(prev => ({ ...prev, payment_terms: value === 'Custom' ? customTerms : value }));
-              }}
-              className="w-full border px-3 py-2 rounded"
-            >
-              <option value="">Select terms</option>
-              {TERMS_OPTIONS.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {form.payment_terms && !TERMS_OPTIONS.includes(form.payment_terms) && (
-              <input
-                type="text"
-                placeholder="Enter custom terms"
-                value={form.payment_terms}
-                onChange={e => setForm(prev => ({ ...prev, payment_terms: e.target.value }))}
-                className="w-full border px-3 py-2 rounded mt-2"
-              />
-            )}
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm mb-1">Due Date</label>
-            <input
-              type="date"
-              name="due_date"
-              value={form.due_date}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-              required
-            />
-          </div>
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-medium">Item Table</h2>
-            <div className="flex gap-2 items-center">
-              <a href="#" className="text-blue-600 text-sm hover:underline" onClick={e => e.preventDefault()}>
-                Scan Item
-              </a>
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700 disabled:opacity-50"
+              >
+                {loading ? 'Saving…' : 'Save Draft'}
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmit(e as unknown as React.FormEvent, 'sent');
+                }}
+                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loading ? 'Sending…' : 'Save & Send'}
+              </button>
             </div>
-          </div>
-          <div className="grid grid-cols-7 gap-2 font-semibold text-xs mb-1">
-            <div className="col-span-2">Item Details</div>
-            <div>Quantity</div>
-            <div>Price</div>
-            <div>Tax</div>
-            <div>Tax Amount</div>
-            <div>Total</div>
-            <div></div>
-          </div>
-          {items.length === 0 && <p className="text-sm text-gray-500">No items yet.</p>}
-          {items.map((item, idx) => {
-            const taxAmount = item.quantity * item.unit_price * item.tax_rate / 100;
-            const rowTotal = (item.quantity * item.unit_price) + taxAmount;
-            return (
-              <div key={idx} className="mb-2 grid grid-cols-7 gap-2">
-                <input
-                  placeholder="Description"
-                  className="col-span-2 rounded border px-2 py-1"
-                  value={item.description}
-                  onChange={(e) => updateItem(idx, 'description', e.target.value)}
-                />
-                <input
-                  type="number"
-                  placeholder="Qty"
-                  className="rounded border px-2 py-1"
-                  value={item.quantity}
-                  onChange={(e) => updateItem(idx, 'quantity', e.target.value)}
-                  min={1}
-                />
-                <div className="relative flex items-center">
-                  <span className="absolute left-2 text-gray-500 text-sm">{currencySymbol}</span>
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    step="0.01"
-                    className="rounded border px-2 py-1 pl-6 w-full"
-                    value={item.unit_price}
-                    onChange={(e) => updateItem(idx, 'unit_price', e.target.value)}
-                    min={0}
-                  />
-                </div>
-                <div className="relative flex items-center">
-                  <input
-                    type="number"
-                    placeholder="Tax"
-                    step="0.01"
-                    className="rounded border px-2 py-1 pr-6 w-full"
-                    value={item.tax_rate}
-                    onChange={(e) => updateItem(idx, 'tax_rate', e.target.value)}
-                    min={0}
-                  />
-                  <span className="absolute right-2 text-gray-500 text-sm">%</span>
-                </div>
-                <div className="relative flex items-center">
-                  <input
-                    type="text"
-                    className="rounded border px-2 py-1 bg-gray-100 text-right w-full"
-                    value={`${currencySymbol}${taxAmount.toFixed(2)}`}
-                    readOnly
-                    tabIndex={-1}
-                    aria-label="Tax Amount"
-                  />
-                </div>
-                <div className="relative flex items-center">
-                  <input
-                    type="text"
-                    className="rounded border px-2 py-1 bg-gray-100 text-right w-full"
-                    value={`${currencySymbol}${rowTotal.toFixed(2)}`}
-                    readOnly
-                    tabIndex={-1}
-                    aria-label="Row Total"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeItem(idx)}
-                  className="rounded bg-red-500 px-2 py-1 text-white hover:bg-red-600"
-                >
-                  ✕
-                </button>
-              </div>
-            );
-          })}
-          <div className="flex gap-2 mt-2">
-            <button
-              type="button"
-              onClick={addItem}
-              className="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
-            >
-              + Add New Row
-            </button>
-            <button
-              type="button"
-              className="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
-              onClick={e => { e.preventDefault(); alert('Bulk add not implemented yet.'); }}
-            >
-              + Add Items in Bulk
-            </button>
-          </div>
+          </form>
         </div>
-        <div className="flex gap-4">
-          <div className="w-40 space-y-1 text-sm">
-            <p>
-              <strong>Total:</strong> {currencySymbol}{grandTotal.toFixed(2)}
-            </p>
+        {/* Right: Summary Panel */}
+        <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-gray-200 bg-gray-50 p-8 flex flex-col justify-between">
+          <div>
+            <h2 className="text-lg font-semibold mb-4 text-gray-700">Summary</h2>
+            <div className="mb-4">
+              <div className="flex justify-between text-base mb-2">
+                <span>Subtotal</span>
+                <span>{currencySymbol}{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-base mb-2">
+                <span>Tax</span>
+                <span>{currencySymbol}{taxTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-xl font-bold text-blue-700 border-t pt-4 mt-4">
+                <span>Total</span>
+                <span>{currencySymbol}{grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
             <button
               type="button"
-              className="text-blue-600 text-xs hover:underline mt-1"
+              className="text-blue-600 text-sm hover:underline"
               onClick={() => setShowTotalSummary((v) => !v)}
             >
               {showTotalSummary ? 'Hide Total Summary ▲' : 'Show Total Summary ▼'}
             </button>
             {showTotalSummary && (
-              <div className="mt-2 border-t pt-2 space-y-1">
+              <div className="mt-2 border-t pt-2 space-y-1 text-sm">
                 <div>
                   <span className="font-medium">Subtotal:</span> {currencySymbol}{subtotal.toFixed(2)}
                 </div>
@@ -560,87 +611,7 @@ export default function NewInvoicePage() {
             )}
           </div>
         </div>
-        <div>
-          <label className="block text-sm mb-1">Customer Notes</label>
-          <textarea
-            name="notes"
-            value={form.notes}
-            onChange={handleChange}
-            className="w-full border px-3 py-2 rounded"
-          />
-        </div>
-        <div className="mt-2">
-          <button
-            type="button"
-            className="flex items-center gap-2 text-blue-600 hover:underline text-sm mb-1"
-            onClick={() => setShowTerms((v) => !v)}
-          >
-            <span>+ Add Terms and conditions</span>
-          </button>
-          {showTerms && (
-            <textarea
-              className="w-full border px-3 py-2 rounded mb-2"
-              placeholder="Enter terms and conditions"
-              value={terms}
-              onChange={e => setTerms(e.target.value)}
-            />
-          )}
-          <button
-            type="button"
-            className="flex items-center gap-2 text-blue-600 hover:underline text-sm mb-1"
-            onClick={() => setShowPaymentGateway((v) => !v)}
-          >
-            <span>+ Add Payment Gateway</span>
-          </button>
-          {showPaymentGateway && (
-            <div className="w-full border px-3 py-2 rounded mb-2 text-gray-500 bg-gray-50">
-              Payment gateway integration coming soon.
-            </div>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm mb-1">Invoice Number</label>
-          <div className="flex items-center gap-2">
-            <input
-              name="number"
-              value={form.number}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-              readOnly={!isEditingNumber}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setIsEditingNumber((v) => !v)}
-              className="rounded bg-gray-200 px-2 py-1 text-sm hover:bg-gray-300"
-              title={isEditingNumber ? 'Lock' : 'Edit'}
-            >
-              {isEditingNumber ? '🔒' : '✏️'}
-            </button>
-          </div>
-        </div>
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700 disabled:opacity-50"
-          >
-            {loading ? 'Saving…' : 'Save Draft'}
-          </button>
-          <button
-            type="button"
-            disabled={loading}
-            onClick={(e) => {
-              e.preventDefault();
-              handleSubmit(e as unknown as React.FormEvent, 'sent');
-            }}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Sending…' : 'Save & Send'}
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 } 

@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-const EditInvoiceForm: any = dynamic(() => import('./EditInvoiceForm'), { ssr: false });
+const EditInvoiceForm: any = dynamic(() => import('../EditInvoiceForm'), { ssr: false });
 
 export default async function EditInvoicePage({ params }: { params: { id: string } }) {
   const supabase = supabaseServer();

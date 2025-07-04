@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, User } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
@@ -10,7 +10,8 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   // Filter users with 'customer' role
-  const customers = data.users
+  const users: User[] = data.users;
+  const customers = users
     .filter(u => u.user_metadata?.role === 'customer')
     .map(u => ({
       id: u.id,

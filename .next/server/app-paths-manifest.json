@@ -1,7 +1,7 @@
 {
   "/page": "app/page.js",
-  "/invoices/page": "app/invoices/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/invoices/new/page": "app/invoices/new/page.js",
-  "/api/customers/route": "app/api/customers/route.js",
-  "/api/invoices/next-number/route": "app/api/invoices/next-number/route.js"
+  "/invoices/[id]/page": "app/invoices/[id]/page.js",
+  "/invoices/page": "app/invoices/page.js"
 }
