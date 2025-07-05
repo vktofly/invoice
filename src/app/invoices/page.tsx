@@ -1,99 +1,144 @@
-import supabase from '@/lib/supabase/server';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
+"use client";
+import { useEffect, useState } from "react";
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useRouter } from "next/navigation";
+import { useAuth } from '@/contexts/AuthContext';
 
-
-
-/**
- * Props interface for the InvoicesPage component.
- * Allows for optional search parameters (status, customer).
- */
-interface Props {
-  searchParams?: { [key: string]: string | string[] | undefined };
+interface Invoice {
+  id: string;
+  number: string;
+  customer_id: string;
+  issue_date: string;
+  status: string;
+  total: number;
 }
 
-/**
- * InvoicesPage component
- * 
- * Server component that fetches and displays a list of invoices.
- * Supports optional filtering by status and customer via searchParams.
- */
-export default async function InvoicesPage({ searchParams }: Props) {
-  // Extract optional filters from searchParams
-  const status = searchParams?.status as string | undefined;
-  const customer = searchParams?.customer as string | undefined;
+interface Customer {
+  id: string;
+  name?: string;
+  email: string;
+}
 
-  // Get a Supabase server client
-  let query = supabase
-    .from('invoices')
-    .select('id, number, total, status, issue_date, due_date')
-    .order('issue_date', { ascending: false });
+export default function InvoicesPage() {
+  const { currentOrg } = useOrganizationContext();
+  const { user } = useAuth();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const router = useRouter();
 
-  // Apply filters if present
-  if (status) query = query.eq('status', status);
-  if (customer) query = query.eq('customer_id', customer);
+  useEffect(() => {
+    if (!user) return;
+    if (user.user_metadata?.role === 'customer') {
+      setError("You do not have access to this page.");
+      setLoading(false);
+      return;
+    }
+    async function fetchData() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [invRes, custRes] = await Promise.all([
+          fetch(`/api/invoices${statusFilter ? `?status=${statusFilter}` : ""}`),
+          fetch("/api/customers"),
+        ]);
+        const invData = await invRes.json();
+        const custData = await custRes.json();
+        if (invRes.ok && custRes.ok) {
+          setInvoices(invData || []);
+          setCustomers(custData.customers || []);
+        } else {
+          setError(invData.error || custData.error || "Failed to fetch data.");
+        }
+      } catch (err) {
+        setError("An unexpected error occurred.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [user, statusFilter]);
 
-  // Fetch the data from Supabase
-  const { data, error } = await query;
-
-  // Handle errors and empty data
-  if (error) throw new Error(error.message);
-  if (!data) notFound();
+  const filteredInvoices = invoices.filter(inv => {
+    if (!search) return true;
+    const customer = customers.find(c => c.id === inv.customer_id);
+    return (
+      inv.number?.toLowerCase().includes(search.toLowerCase()) ||
+      customer?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      customer?.email?.toLowerCase().includes(search.toLowerCase())
+    );
+  });
 
   return (
-    <div className="p-6">
-      {/* Header with title and New Invoice button */}
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold">Invoices</h1>
-        <Link
-          href="/invoices/new"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          New Invoice
-        </Link>
-      </div>
-
-      {/* Invoices table */}
-      <table className="min-w-full bg-white shadow rounded">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-              Number
-            </th>
-            <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-              Issue Date
-            </th>
-            <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-              Due Date
-            </th>
-            <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-              Total
-            </th>
-            <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">
-              Status
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* Render each invoice as a table row */}
-          {data.map((inv) => (
-            <tr key={inv.id} className="border-t hover:bg-gray-50">
-              <td className="px-4 py-2">
-                <Link
-                  href={`/invoices/${inv.id}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  {inv.number || inv.id.substring(0, 8)}
-                </Link>
-              </td>
-              <td className="px-4 py-2">{inv.issue_date}</td>
-              <td className="px-4 py-2">{inv.due_date}</td>
-              <td className="px-4 py-2">${inv.total}</td>
-              <td className="px-4 py-2 capitalize">{inv.status}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="max-w-6xl mx-auto py-8 px-4">
+      <h1 className="text-2xl font-bold mb-6">All Invoices</h1>
+      {loading ? (
+        <div>Loading...</div>
+      ) : error ? (
+        <div className="text-red-600 mb-4">{error}</div>
+      ) : (
+        <>
+          <div className="flex flex-col md:flex-row gap-2 mb-4 items-end">
+            <input
+              type="text"
+              placeholder="Search by invoice #, customer name, or email"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="border rounded px-3 py-2 w-full md:w-64"
+            />
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+              className="border rounded px-3 py-2 w-full md:w-40"
+            >
+              <option value="">All Statuses</option>
+              <option value="draft">Draft</option>
+              <option value="sent">Sent</option>
+              <option value="paid">Paid</option>
+              <option value="overdue">Overdue</option>
+            </select>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border rounded bg-white">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-4 py-2 text-left text-sm font-semibold">Invoice #</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold">Customer</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold">Date</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold">Status</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold">Total</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold">Download</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredInvoices.map(inv => {
+                  const customer = customers.find(c => c.id === inv.customer_id);
+                  return (
+                    <tr key={inv.id} className="border-t">
+                      <td className="px-4 py-2">{inv.number}</td>
+                      <td className="px-4 py-2">{customer?.name || customer?.email || inv.customer_id}</td>
+                      <td className="px-4 py-2">{inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : ''}</td>
+                      <td className="px-4 py-2 capitalize">{inv.status}</td>
+                      <td className="px-4 py-2">₹{inv.total?.toLocaleString()}</td>
+                      <td className="px-4 py-2">
+                        <button
+                          className="text-indigo-600 hover:underline"
+                          onClick={() => router.push(`/invoices/${inv.id}/download`)}
+                        >
+                          Download
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 } 

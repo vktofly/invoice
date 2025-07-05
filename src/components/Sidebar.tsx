@@ -18,6 +18,7 @@ import {
   AdjustmentsHorizontalIcon,
 } from '@heroicons/react/24/outline';
 import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { name: 'Home', href: '/dashboard', icon: HomeIcon },
@@ -37,11 +38,22 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const role = user?.user_metadata?.role;
+
+  let filteredNavItems = navItems;
+  if (role === 'customer') {
+    filteredNavItems = [
+      { name: 'My Invoices', href: '/customer/invoices', icon: DocumentTextIcon },
+      { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+    ];
+  }
+
   return (
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r bg-white p-4 shadow-sm lg:flex">
       <div className="mb-6 text-xl font-bold text-indigo-600">InvoiceApp</div>
       <nav className="flex flex-1 flex-col gap-1 text-sm font-medium">
-        {navItems.map((item, idx) => {
+        {filteredNavItems.map((item, idx) => {
           const Icon = item.icon;
           const active = pathname?.startsWith(item.href);
           const dividerAfter = [0, 2, 5, 7, 9, 11].includes(idx);

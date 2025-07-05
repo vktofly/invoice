@@ -8,10 +8,36 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get('status');
   const customer = searchParams.get('customer');
 
+  // Use the authenticated client so we know who the user is
+  const supa = createRouteHandlerClient({ cookies });
+  const { data: { user }, error: userError } = await supa.auth.getUser();
+  if (userError || !user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  // Get user role
+  const role = user.user_metadata?.role;
+
   let query = supabase.from('invoices').select('*');
 
   if (status) query = query.eq('status', status);
   if (customer) query = query.eq('customer_id', customer);
+
+  if (role === 'customer') {
+    // Find the customer record for this user
+    const { data: customerRecord, error: custErr } = await supa
+      .from('customers')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .single();
+    if (custErr || !customerRecord) {
+      return NextResponse.json({ error: 'No customer record found for this user.' }, { status: 403 });
+    }
+    query = query.eq('customer_id', customerRecord.id);
+  } else {
+    // For vendor/admin, you may want to filter by organization here if needed
+    // e.g., query = query.eq('org_id', currentOrgId)
+  }
 
   const { data, error } = await query;
   if (error)

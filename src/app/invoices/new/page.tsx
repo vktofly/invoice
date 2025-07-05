@@ -273,12 +273,12 @@ export default function NewInvoicePage() {
             const { name, value } = e.target;
             setNewCustomer(prev => ({ ...prev, [name]: value }));
           }}
-          onAddCustomer={async () => {
+          onAddCustomer={async (allowLogin: boolean) => {
             setAddingCustomer(true);
             const res = await fetch('/api/customers', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(newCustomer),
+              body: JSON.stringify({ ...newCustomer, allowLogin }),
             });
             setAddingCustomer(false);
             if (res.ok) {
