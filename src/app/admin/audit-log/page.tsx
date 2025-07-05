@@ -1,7 +1,6 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import supabase from '@/lib/supabase/server';
 
 export default async function AuditLogPage() {
-  const supabase = supabaseServer();
   const { data, error } = await supabase
     .from('audit_logs')
     .select('*')

@@ -14,6 +14,7 @@ interface Props {
 
 /**
  * InvoicesPage component
+ * 
  * Server component that fetches and displays a list of invoices.
  * Supports optional filtering by status and customer via searchParams.
  */

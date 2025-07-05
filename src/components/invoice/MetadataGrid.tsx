@@ -27,8 +27,9 @@ const MetadataGrid: React.FC<MetadataGridProps> = ({
   dueDate = '',
   onDueDateChange,
 }) => (
-  <div className="w-full px-8 mb-8">
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-gray-50 border border-gray-200 rounded-lg p-6">
+  <div className="w-full px-0 mb-12">
+    <h2 className="text-lg font-semibold mb-4">Invoice Details</h2>
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-gray-50 p-6 border-b border-gray-200 rounded-md">
       {/* Invoice Number */}
       <div>
         <label className="block text-xs font-medium mb-1 text-gray-700">Invoice#<span className="text-red-500">*</span></label>
@@ -37,7 +38,7 @@ const MetadataGrid: React.FC<MetadataGridProps> = ({
             name="number"
             value={number}
             onChange={onNumberChange}
-            className="w-full border border-gray-300 px-2 py-2 rounded-none bg-transparent text-base focus:border-blue-500"
+            className="w-full border border-gray-300 px-2 py-2 rounded-md bg-transparent focus:border-blue-500 text-base"
             readOnly={!isEditingNumber}
             required
           />
@@ -59,7 +60,7 @@ const MetadataGrid: React.FC<MetadataGridProps> = ({
           name="issue_date"
           value={issueDate}
           onChange={onIssueDateChange}
-          className="w-full border border-gray-300 px-2 py-2 rounded-none bg-transparent text-base focus:border-blue-500"
+          className="w-full border border-gray-300 px-2 py-2 rounded-md bg-transparent focus:border-blue-500 text-base"
           required
         />
       </div>
@@ -70,7 +71,7 @@ const MetadataGrid: React.FC<MetadataGridProps> = ({
           name="payment_terms"
           value={paymentTerms}
           onChange={onPaymentTermsChange}
-          className="w-full border border-gray-300 px-2 py-2 rounded-none bg-transparent text-base focus:border-blue-500"
+          className="w-full border border-gray-300 px-2 py-2 rounded-md bg-transparent focus:border-blue-500 text-base"
         >
           <option value="">Due on Receipt</option>
           {termsOptions.map(opt => (
@@ -86,7 +87,7 @@ const MetadataGrid: React.FC<MetadataGridProps> = ({
           name="due_date"
           value={dueDate}
           onChange={onDueDateChange}
-          className="w-full border border-gray-300 px-2 py-2 rounded-none bg-transparent text-base focus:border-blue-500"
+          className="w-full border border-gray-300 px-2 py-2 rounded-md bg-transparent focus:border-blue-500 text-base"
           required
         />
       </div>

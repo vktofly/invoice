@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import Supabase from '@/lib/supabase/server';
 import Link from 'next/link';
 import InvoiceActions from './InvoiceActions';
 import { notFound } from 'next/navigation';
@@ -24,7 +24,7 @@ const InvoicePDFDownload: any = dynamic(() => import('./InvoicePDFDownload'), { 
  */
 export default async function InvoiceDetailPage({ params }: PageProps) {
   // Get a Supabase server client
-  const supabase = supabaseServer();
+  const supabase = Supabase;
   // Fetch the invoice and its items by id
   const { data: invoice, error } = await supabase
     .from('invoices')

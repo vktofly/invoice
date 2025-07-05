@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const industries = [
   "IT Services",
@@ -34,6 +35,7 @@ const timezones = [
 ];
 
 export default function OrganizationSetup() {
+  const router = useRouter();
   const [form, setForm] = useState({
     name: "",
     industry: "",
@@ -44,6 +46,7 @@ export default function OrganizationSetup() {
     language: "English",
     timezone: timezones[0],
     gst: false,
+    gst_number: "",
     invoicing: "",
   });
   const [showAddress, setShowAddress] = useState(false);
@@ -61,11 +64,29 @@ export default function OrganizationSetup() {
     }));
   };
 
+  const validate = () => {
+    if (!form.name) return "Organization Name is required.";
+    if (!form.industry) return "Industry is required.";
+    if (!form.country) return "Country is required.";
+    if (!form.state) return "State/Union Territory is required.";
+    if (!form.currency) return "Currency is required.";
+    if (!form.language) return "Language is required.";
+    if (!form.timezone) return "Time zone is required.";
+    if (form.gst && !form.gst_number) return "GST Number is required if GST is registered.";
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
     setError(null);
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch("/api/organization", {
         method: "POST",
@@ -75,6 +96,7 @@ export default function OrganizationSetup() {
       const data = await res.json();
       if (res.ok) {
         setMessage("Organization details saved successfully!");
+        router.push("/organizations");
       } else {
         setError(data.error || "Failed to save organization details.");
       }
@@ -229,6 +251,20 @@ export default function OrganizationSetup() {
             />
             <span>{form.gst ? "Yes" : "No"}</span>
           </div>
+          {/* GST Number (conditional) */}
+          {form.gst && (
+            <div>
+              <label className="block font-medium mb-1">GST Number<span className="text-red-500">*</span></label>
+              <input
+                name="gst_number"
+                value={form.gst_number}
+                onChange={handleChange}
+                required={form.gst}
+                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring"
+                placeholder="Enter GST Number"
+              />
+            </div>
+          )}
           {/* Invoicing Method */}
           <div>
             <label className="block font-medium mb-1">How are you managing invoicing currently?</label>

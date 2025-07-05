@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabase/server';
+import Supabase from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -10,7 +10,7 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = supabaseServer();
+  const supabase = Supabase;
   // Fetch the invoice and its items by id
   const { data: invoice, error } = await supabase
     .from('invoices')
@@ -38,7 +38,7 @@ export async function PATCH(
   const payload = await request.json();
   const { items = [], ...invoiceData } = payload;
 
-  const supabase = supabaseServer();
+  const supabase = Supabase;
 
   // Update the invoice fields
   const { data: invoice, error: invError } = await supabase
@@ -83,7 +83,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = supabaseServer();
+  const supabase = Supabase;
   // Delete the invoice by id
   const { error } = await supabase.from('invoices').delete().eq('id', params.id);
 

@@ -4,9 +4,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Dynamically import the Vendor and Customer dashboards to avoid SSR issues
 const VendorDashboard = dynamic(() => import('@/components/VendorDashboard'), { ssr: false });
@@ -51,25 +52,26 @@ const TABS = [
  * Shows tab navigation for vendors, and redirects admins to the admin dashboard.
  */
 export default function DashboardPage() {
+  const { user } = useAuth();
   // The user's role (vendor, customer, or admin)
   const [role, setRole] = useState<string | null>(null);
   const router = useRouter();
   // The currently selected tab (for vendors)
   const [tab, setTab] = useState("dashboard");
 
-  // On mount, check the user's session and role
+  // On mount, check the user's role
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    if (user) {
       // Get the user's role from their metadata, default to 'customer' if not set
-      const r = (data.session?.user.user_metadata?.role as string) || 'customer';
+      const r = (user.user_metadata?.role as string) || 'customer';
       if (r === 'admin') {
         // Redirect admins to the admin dashboard
         router.replace('/admin');
       } else {
         setRole(r);
       }
-    });
-  }, [router]);
+    }
+  }, [user, router]);
 
   // Show a loading state while determining the user's role
   if (!role)
@@ -81,35 +83,41 @@ export default function DashboardPage() {
 
   // If the user is a vendor, show the tabbed dashboard
   if (role === 'vendor') return (
-    <div className="w-full">
-      {/* Tabs for navigation between dashboard sections */}
-      <div className="flex gap-2 border-b bg-white px-8 pt-6">
-        {TABS.map((t) => (
-          <button
-            key={t.value}
-            onClick={() => setTab(t.value)}
-            className={`px-4 py-2 -mb-px border-b-2 font-medium transition-colors duration-150 focus:outline-none ${
-              tab === t.value
-                ? "border-indigo-600 text-indigo-700"
-                : "border-transparent text-gray-500 hover:text-indigo-600"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+    <ProtectedRoute>
+      <div className="w-full">
+        {/* Tabs for navigation between dashboard sections */}
+        <div className="flex gap-2 border-b bg-white px-8 pt-6">
+          {TABS.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setTab(t.value)}
+              className={`px-4 py-2 -mb-px border-b-2 font-medium transition-colors duration-150 focus:outline-none ${
+                tab === t.value
+                  ? "border-indigo-600 text-indigo-700"
+                  : "border-transparent text-gray-500 hover:text-indigo-600"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {/* Tab Panels: Render the selected tab's content */}
+        <div className="min-h-[60vh] bg-gray-50">
+          {tab === "dashboard" && (
+            <div className="max-w-7xl mx-auto">
+              <VendorDashboard />
+            </div>
+          )}
+          {tab === "announcements" && <Announcements />}
+          {tab === "updates" && <RecentUpdates />}
+        </div>
       </div>
-      {/* Tab Panels: Render the selected tab's content */}
-      <div className="min-h-[60vh] bg-gray-50">
-        {tab === "dashboard" && (
-          <div className="max-w-7xl mx-auto">
-            <VendorDashboard />
-          </div>
-        )}
-        {tab === "announcements" && <Announcements />}
-        {tab === "updates" && <RecentUpdates />}
-      </div>
-    </div>
+    </ProtectedRoute>
   );
   // For customers, show the customer dashboard
-  return <CustomerDashboard />;
+  return (
+    <ProtectedRoute>
+      <CustomerDashboard />
+    </ProtectedRoute>
+  );
 } 

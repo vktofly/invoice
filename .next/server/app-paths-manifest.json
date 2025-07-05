@@ -1,11 +1,1 @@
-{
-  "/page": "app/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/invoices/page": "app/invoices/page.js",
-  "/invoices/[id]/page": "app/invoices/[id]/page.js",
-  "/api/customers/route": "app/api/customers/route.js",
-  "/invoices/new/page": "app/invoices/new/page.js",
-  "/api/invoices/next-number/route": "app/api/invoices/next-number/route.js",
-  "/api/customers/[id]/route": "app/api/customers/[id]/route.js"
-}
+{}

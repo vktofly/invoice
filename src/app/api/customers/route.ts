@@ -1,44 +1,59 @@
-import { createClient, User } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-
-export async function GET() {
-  // List all users
-  const { data, error } = await supabase.auth.admin.listUsers();
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-  // Filter users with 'customer' role
-  const users: User[] = data.users;
-  const customers = users
-    .filter(u => u.user_metadata?.role === 'customer')
-    .map(u => ({
-      id: u.id,
-      email: u.email,
-      name: u.user_metadata?.name || '',
-    }));
-  return NextResponse.json({ customers });
-}
-
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   const { name, email } = await req.json();
+  
   if (!email) {
     return NextResponse.json({ error: 'Email is required' }, { status: 400 });
   }
-  // Create a new user with the 'customer' role
-  const { data, error } = await supabase.auth.admin.createUser({
-    email,
-    user_metadata: { name, role: 'customer' },
-    email_confirm: false,
-  });
+
+  // Get the authenticated user
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  // Insert customer into the customers table
+  const { data: customer, error } = await supabase
+    .from('customers')
+    .insert({
+      name,
+      email,
+      user_id: user.id, // Use UUID string directly as text
+    })
+    .select()
+    .single();
+
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
-  const customer = {
-    id: data.user.id,
-    email: data.user.email,
-    name: data.user.user_metadata?.name || '',
-  };
+
   return NextResponse.json({ customer }, { status: 201 });
-} 
+}
+
+export async function GET() {
+  // Get the authenticated user
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  // Fetch customers from customers table for the current user
+  const { data: customers, error } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('user_id', user.id) // Use UUID string directly as text
+    .order('name');
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ customers: customers || [] });
+}
