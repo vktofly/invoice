@@ -14,7 +14,7 @@ export default async function AdminUsersPage() {
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Users</h1>
-        <Link href="/admin/users/new" className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
+        <Link href="/(protected)/admin/users/new" className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
           Add User
         </Link>
       </div>

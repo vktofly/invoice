@@ -13,7 +13,46 @@ CREATE TABLE IF NOT EXISTS customers (
     country TEXT,
     gstin TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    -- Additional fields for full customer registration
+    customer_type TEXT, -- Business or Individual
+    salutation TEXT,
+    first_name TEXT,
+    last_name TEXT,
+    company_name TEXT,
+    display_name TEXT,
+    currency TEXT,
+    work_phone TEXT,
+    mobile TEXT,
+    pan TEXT,
+    payment_terms TEXT,
+    portal_language TEXT,
+    -- Address fields
+    billing_attention TEXT,
+    billing_country TEXT,
+    billing_address1 TEXT,
+    billing_address2 TEXT,
+    billing_city TEXT,
+    billing_state TEXT,
+    billing_pin TEXT,
+    billing_phone TEXT,
+    billing_fax TEXT,
+    shipping_attention TEXT,
+    shipping_country TEXT,
+    shipping_address1 TEXT,
+    shipping_address2 TEXT,
+    shipping_city TEXT,
+    shipping_state TEXT,
+    shipping_pin TEXT,
+    shipping_phone TEXT,
+    shipping_fax TEXT,
+    -- Other details fields
+    website TEXT,
+    department TEXT,
+    designation TEXT,
+    twitter TEXT,
+    skype TEXT,
+    facebook TEXT
 );
 
 -- Create index for faster queries

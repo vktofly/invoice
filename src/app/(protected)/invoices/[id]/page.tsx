@@ -47,7 +47,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
           Invoice {invoice.number ?? invoice.id.substring(0, 8)}
         </h1>
         <div className="flex gap-4">
-          <Link href="/invoices" className="text-blue-600 hover:underline">
+          <Link href="/(protected)/invoices" className="text-blue-600 hover:underline">
             ← All Invoices
           </Link>
           {/* PDF download button */}

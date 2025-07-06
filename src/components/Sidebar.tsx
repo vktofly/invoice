@@ -20,6 +20,7 @@ import {
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
+
 const navItems = [
   { name: 'Home', href: '/dashboard', icon: HomeIcon },
   { name: 'Customers', href: '/customers', icon: UsersIcon },
@@ -41,16 +42,20 @@ export default function Sidebar() {
   const { user } = useAuth();
   const role = user?.user_metadata?.role;
 
-  let filteredNavItems = navItems;
+  let filteredNavItems: typeof navItems = [];
   if (role === 'customer') {
     filteredNavItems = [
       { name: 'My Invoices', href: '/customer/invoices', icon: DocumentTextIcon },
       { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
     ];
-  }
+  } else if (role === 'vendor' || role === 'user') {
+    filteredNavItems = navItems;
+  } // else: show nothing
+
+  if (!role) return null;
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r bg-white p-4 shadow-sm lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-20 w-64 flex flex-col border-r bg-white p-4 shadow-sm h-screen overflow-y-auto">
       <div className="mb-6 text-xl font-bold text-indigo-600">InvoiceApp</div>
       <nav className="flex flex-1 flex-col gap-1 text-sm font-medium">
         {filteredNavItems.map((item, idx) => {

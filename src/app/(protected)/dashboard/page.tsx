@@ -8,6 +8,9 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import RoleProtected from '@/components/RoleProtected';
+import { UserCircleIcon } from '@heroicons/react/24/outline';
+import TabNav from '@/components/TabNav';
 
 // Dynamically import the Vendor and Customer dashboards to avoid SSR issues
 const VendorDashboard = dynamic(() => import('@/components/VendorDashboard'), { ssr: false });
@@ -53,6 +56,7 @@ const TABS = [
  */
 export default function DashboardPage() {
   const { user } = useAuth();
+  const displayName = user?.user_metadata?.name || user?.email || 'User';
   // The user's role (vendor, customer, or admin)
   const [role, setRole] = useState<string | null>(null);
   const router = useRouter();
@@ -83,41 +87,51 @@ export default function DashboardPage() {
 
   // If the user is a vendor, show the tabbed dashboard
   if (role === 'vendor') return (
-    <ProtectedRoute>
-      <div className="w-full">
-        {/* Tabs for navigation between dashboard sections */}
-        <div className="flex gap-2 border-b bg-white px-8 pt-6">
-          {TABS.map((t) => (
-            <button
-              key={t.value}
-              onClick={() => setTab(t.value)}
-              className={`px-4 py-2 -mb-px border-b-2 font-medium transition-colors duration-150 focus:outline-none ${
-                tab === t.value
-                  ? "border-indigo-600 text-indigo-700"
-                  : "border-transparent text-gray-500 hover:text-indigo-600"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        {/* Tab Panels: Render the selected tab's content */}
-        <div className="min-h-[60vh] bg-gray-50">
-          {tab === "dashboard" && (
-            <div className="max-w-7xl mx-auto">
-              <VendorDashboard />
+    <RoleProtected allowedRoles={["user", "vendor"]}>
+      <ProtectedRoute>
+        <div className="w-full">
+          {/* Personalized Greeting */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-8 pt-8 pb-2">
+            <div>
+              <h1 className="text-2xl font-semibold flex items-center gap-2">Hello, {displayName} <span className="text-lg font-normal text-gray-400">👋</span></h1>
+              <div className="text-gray-500 text-sm">{user?.email}</div>
             </div>
-          )}
-          {tab === "announcements" && <Announcements />}
-          {tab === "updates" && <RecentUpdates />}
+            <div className="flex items-center gap-2">
+              <UserCircleIcon className="h-10 w-10 text-gray-300" />
+            </div>
+          </div>
+          {/* Unified TabNav */}
+          <TabNav tabs={TABS} value={tab} onChange={setTab} />
+          {/* Tab Panels: Render the selected tab's content */}
+          <div className="min-h-[60vh] bg-gray-50">
+            {tab === "dashboard" && (
+              <div className="max-w-7xl mx-auto">
+                <VendorDashboard />
+              </div>
+            )}
+            {tab === "announcements" && <Announcements />}
+            {tab === "updates" && <RecentUpdates />}
+          </div>
         </div>
-      </div>
-    </ProtectedRoute>
+      </ProtectedRoute>
+    </RoleProtected>
   );
   // For customers, show the customer dashboard
   return (
-    <ProtectedRoute>
-      <CustomerDashboard />
-    </ProtectedRoute>
+    <RoleProtected allowedRoles={["user", "vendor"]}>
+      <ProtectedRoute>
+        {/* Personalized Greeting */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-8 pt-8 pb-2">
+          <div>
+            <h1 className="text-2xl font-semibold flex items-center gap-2">Hello, {displayName} <span className="text-lg font-normal text-gray-400">👋</span></h1>
+            <div className="text-gray-500 text-sm">{user?.email}</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <UserCircleIcon className="h-10 w-10 text-gray-300" />
+          </div>
+        </div>
+        <CustomerDashboard />
+      </ProtectedRoute>
+    </RoleProtected>
   );
 } 

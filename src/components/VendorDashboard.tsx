@@ -33,13 +33,13 @@ export default function VendorDashboard() {
         <h1 className="text-2xl font-semibold">Dashboard</h1>
         <div className="flex gap-2">
           <Link
-            href="/invoices/new"
+            href="/(protected)/invoices/new"
             className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
           >
             New Invoice
           </Link>
           <Link
-            href="/invoices"
+            href="/(protected)/invoices"
             className="rounded border px-4 py-2 text-indigo-600 hover:bg-gray-50"
           >
             View Invoices
