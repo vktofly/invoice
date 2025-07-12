@@ -1,9 +1,12 @@
-"use client";
+'use client'
 import { useEffect, useState } from "react";
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useRouter } from "next/navigation";
 import { useAuth } from '@/contexts/AuthContext';
 import RoleProtected from '@/components/RoleProtected';
+
+import InvoicePageSkeleton from '@/components/skeletons/InvoicePageSkeleton';
+import { InvoicePDFDownloader } from '@/components/invoice/InvoicePDFDownloader';
 
 interface Invoice {
   id: string;
@@ -12,19 +15,21 @@ interface Invoice {
   issue_date: string;
   status: string;
   total: number;
-}
-
-interface Customer {
-  id: string;
-  name?: string;
-  email: string;
+  subtotal: number;
+  total_tax: number;
+  customers: {
+    id: string;
+    name?: string;
+    email: string;
+  };
+  // Add all other invoice fields needed for the PDF
+  [key: string]: any;
 }
 
 export default function InvoicesPage() {
   const { currentOrg } = useOrganizationContext();
   const { user } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -32,55 +37,57 @@ export default function InvoicesPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) return;
-    if (user.user_metadata?.role === 'customer') {
-      setError("You do not have access to this page.");
-      setLoading(false);
-      return;
-    }
+    // Ensure user is loaded before fetching
+    if (!user?.id) return;
+
     async function fetchData() {
       setLoading(true);
       setError(null);
       try {
-        const [invRes, custRes] = await Promise.all([
-          fetch(`/api/invoices${statusFilter ? `?status=${statusFilter}` : ""}`),
-          fetch("/api/customers"),
-        ]);
-        const invData = await invRes.json();
-        const custData = await custRes.json();
-        if (invRes.ok && custRes.ok) {
-          setInvoices(invData || []);
-          setCustomers(custData.customers || []);
-        } else {
-          setError(invData.error || custData.error || "Failed to fetch data.");
+        // The API route is already protected, so we just fetch
+        const res = await fetch(`/api/invoices?status=${statusFilter}`);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to fetch invoices.');
         }
-      } catch (err) {
-        setError("An unexpected error occurred.");
+        const data = await res.json();
+        setInvoices(data || []);
+      } catch (err: any) {
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [user, statusFilter]);
-
+  }, [user?.id, statusFilter]); // Depend on user.id to re-trigger when user loads
   const filteredInvoices = invoices.filter(inv => {
     if (!search) return true;
-    const customer = customers.find(c => c.id === inv.customer_id);
     return (
       inv.number?.toLowerCase().includes(search.toLowerCase()) ||
-      customer?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      customer?.email?.toLowerCase().includes(search.toLowerCase())
+      inv.customers?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      inv.customers?.email?.toLowerCase().includes(search.toLowerCase())
     );
   });
 
   return (
-    <RoleProtected allowedRoles={["user", "vendor"]}>
-      <div className="max-w-6xl mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6">All Invoices</h1>
+    <RoleProtected allowedRoles={["user", "vendor", "customer"]}>
+      <div className="bg-white/40 backdrop-blur-lg rounded-xl border border-white/20 shadow-lg p-6 dark:bg-gray-800/40 dark:border-gray-700">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">All Invoices</h1>
+          {user?.user_metadata?.role !== 'customer' && (
+            <button
+              onClick={() => router.push('/invoices/new')}
+              className="btn-primary bg-blue-500 hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800 flex items-center gap-2"
+            >
+              <span className="text-lg">+</span>
+              New Invoice
+            </button>
+          )}
+        </div>
         {loading ? (
-          <div>Loading...</div>
+          <InvoicePageSkeleton />
         ) : error ? (
-          <div className="text-red-600 mb-4">{error}</div>
+          <div className="text-red-500 bg-red-100 border border-red-400 rounded-md p-4 mb-4 dark:bg-red-900/50 dark:text-red-300 dark:border-red-700">{error}</div>
         ) : (
           <>
             <div className="flex flex-col md:flex-row gap-2 mb-4 items-end">
@@ -89,12 +96,12 @@ export default function InvoicesPage() {
                 placeholder="Search by invoice #, customer name, or email"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="border rounded px-3 py-2 w-full md:w-64"
+                className="w-full md:w-64 rounded-md border-white/30 bg-white/50 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-blue-500"
               />
               <select
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value)}
-                className="border rounded px-3 py-2 w-full md:w-40"
+                className="w-full md:w-40 rounded-md border-white/30 bg-white/50 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-blue-500"
               >
                 <option value="">All Statuses</option>
                 <option value="draft">Draft</option>
@@ -104,38 +111,59 @@ export default function InvoicesPage() {
               </select>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full border rounded bg-white">
+              <table className="min-w-full border-collapse">
                 <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-4 py-2 text-left text-sm font-semibold">Invoice #</th>
-                    <th className="px-4 py-2 text-left text-sm font-semibold">Customer</th>
-                    <th className="px-4 py-2 text-left text-sm font-semibold">Date</th>
-                    <th className="px-4 py-2 text-left text-sm font-semibold">Status</th>
-                    <th className="px-4 py-2 text-left text-sm font-semibold">Total</th>
-                    <th className="px-4 py-2 text-left text-sm font-semibold">Download</th>
+                  <tr className="border-b border-white/20 dark:border-gray-700">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">Invoice #</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">Customer</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">Date</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">Status</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600 dark:text-gray-400">Total</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredInvoices.map(inv => {
-                    const customer = customers.find(c => c.id === inv.customer_id);
-                    return (
-                      <tr key={inv.id} className="border-t">
-                        <td className="px-4 py-2">{inv.number}</td>
-                        <td className="px-4 py-2">{customer?.name || customer?.email || inv.customer_id}</td>
-                        <td className="px-4 py-2">{inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : ''}</td>
-                        <td className="px-4 py-2 capitalize">{inv.status}</td>
-                        <td className="px-4 py-2">₹{inv.total?.toLocaleString()}</td>
-                        <td className="px-4 py-2">
-                          <button
-                            className="text-indigo-600 hover:underline"
-                            onClick={() => router.push(`/invoices/${inv.id}/download`)}
-                          >
-                            Download
-                          </button>
+                  {filteredInvoices.map(inv => (
+                      <tr 
+                        key={inv.id} 
+                        className="border-b border-white/20 hover:bg-white/50 dark:border-gray-700 dark:hover:bg-gray-700/50 cursor-pointer"
+                        onClick={() => router.push(`/invoices/${inv.id}`)}
+                      >
+                        <td className="px-4 py-3 text-gray-800 dark:text-gray-100">{inv.number}</td>
+                        <td className="px-4 py-3 text-gray-800 dark:text-gray-100">{inv.customers?.name || inv.customers?.email || inv.customer_id}</td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : ''}</td>
+                        <td className="px-4 py-3 capitalize">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            inv.status === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' :
+                            inv.status === 'sent' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
+                            inv.status === 'overdue' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' :
+                            'bg-gray-100 text-gray-800 dark:bg-gray-600/50 dark:text-gray-300'
+                          }`}>
+                            {inv.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium text-gray-800 dark:text-gray-100">₹{inv.total?.toLocaleString()}</td>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              className="text-blue-500 hover:underline dark:text-blue-400"
+                              onClick={() => router.push(`/invoices/${inv.id}`)}
+                            >
+                              View
+                            </button>
+                            {user?.user_metadata?.role !== 'customer' && (
+                              <button
+                                className="text-blue-500 hover:underline dark:text-blue-400"
+                                onClick={() => router.push(`/invoices/${inv.id}/edit`)}
+                              >
+                                Edit
+                              </button>
+                            )}
+                            <InvoicePDFDownloader invoiceId={inv.id} />
+                          </div>
                         </td>
                       </tr>
-                    );
-                  })}
+                  ))}
                 </tbody>
               </table>
             </div>

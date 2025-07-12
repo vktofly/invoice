@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import AddCustomerModal from './AddCustomerModal';
 
 type Customer = {
   id: string;
@@ -10,28 +11,19 @@ type CustomerRowProps = {
   customers: Customer[];
   customerId: string;
   onSelect: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  onAddClick: () => void;
+  onAddCustomer: (customer: any) => Promise<void>;
   showAddCustomer: boolean;
-  newCustomer: { name: string; email: string };
-  onNewCustomerChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onAddCustomer: (allowLogin: boolean) => void;
-  onCancelAdd: () => void;
-  addingCustomer: boolean;
+  setShowAddCustomer: (show: boolean) => void;
 };
 
 const CustomerRow: React.FC<CustomerRowProps> = ({
   customers = [],
   customerId = '',
   onSelect,
-  onAddClick,
-  showAddCustomer = false,
-  newCustomer = { name: '', email: '' },
-  onNewCustomerChange,
   onAddCustomer,
-  onCancelAdd,
-  addingCustomer = false,
+  showAddCustomer,
+  setShowAddCustomer,
 }) => {
-  const [allowLogin, setAllowLogin] = useState(false);
   return (
     <div className="w-full px-8 mb-8">
       <label className="block text-base font-medium mb-1 text-gray-800 font-sans">
@@ -60,60 +52,17 @@ const CustomerRow: React.FC<CustomerRowProps> = ({
         <button
           type="button"
           className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 text-sm font-medium flex items-center gap-1"
-          onClick={onAddClick}
+          onClick={() => setShowAddCustomer(true)}
         >
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/><path stroke="currentColor" strokeWidth="2" d="M12 8v8M8 12h8"/></svg>
           Add
         </button>
       </div>
       {showAddCustomer && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
-          <div className="bg-white rounded border border-gray-200 p-6 w-full max-w-sm">
-            <h3 className="font-semibold mb-2 text-gray-900">Add New Customer</h3>
-            <input
-              type="text"
-              name="name"
-              placeholder="Name"
-              className="w-full border border-gray-300 px-3 py-2 rounded mb-2"
-              value={newCustomer.name}
-              onChange={onNewCustomerChange}
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              className="w-full border border-gray-300 px-3 py-2 rounded mb-2"
-              value={newCustomer.email}
-              onChange={onNewCustomerChange}
-              required={allowLogin}
-            />
-            <label className="flex items-center gap-2 mb-2">
-              <input
-                type="checkbox"
-                checked={allowLogin}
-                onChange={e => setAllowLogin(e.target.checked)}
-              />
-              <span className="text-sm">Allow this customer to log in and view their invoices</span>
-            </label>
-            <div className="flex gap-2 mt-2">
-              <button
-                type="button"
-                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-                onClick={() => onAddCustomer(allowLogin)}
-                disabled={addingCustomer || !newCustomer.email || (allowLogin && !newCustomer.email)}
-              >
-                {addingCustomer ? 'Adding…' : 'Add Customer'}
-              </button>
-              <button
-                type="button"
-                className="rounded bg-gray-100 px-4 py-2 text-gray-700 hover:bg-gray-200"
-                onClick={onCancelAdd}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <AddCustomerModal
+          onClose={() => setShowAddCustomer(false)}
+          onAddCustomer={(customer) => onAddCustomer(customer)}
+        />
       )}
     </div>
   );

@@ -1,0 +1,126 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Script from 'next/script';
+import {
+  CreditCardIcon,
+  PencilIcon,
+  ShareIcon,
+  PaperAirplaneIcon,
+} from '@heroicons/react/24/outline';
+import InvoicePDFLink from './InvoicePDFLink'; // Assuming this is in the same directory
+
+// Define the Invoice type again for props
+interface Invoice {
+  id: string;
+  number: string;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  total_amount: number;
+  currency: string;
+  customer: { name: string; email: string };
+  [key: string]: any; // Allow other properties
+}
+
+// Helper to get currency symbol
+const getCurrencySymbol = (currency: string) => {
+  const symbols: { [key: string]: string } = {
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    INR: '₹',
+  };
+  return symbols[currency] || '$';
+};
+
+export default function InvoiceActionsWrapper({ invoice }: { invoice: Invoice }) {
+  const router = useRouter();
+  const [isPaying, setIsPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handlePayment = async () => {
+    setIsPaying(true);
+    setError(null);
+    try {
+      const orderRes = await fetch(`/api/invoices/${invoice.id}/create-payment-order`, {
+        method: 'POST',
+      });
+      if (!orderRes.ok) {
+        const errData = await orderRes.json();
+        throw new Error(errData.error || 'Failed to create payment order.');
+      }
+      const order = await orderRes.json();
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Invoicer Inc.',
+        description: `Payment for Invoice #${invoice.number}`,
+        order_id: order.id,
+        handler: (response: any) => {
+          alert('Payment successful! Your invoice status will be updated shortly.');
+          router.refresh();
+        },
+        prefill: {
+          name: invoice.customer.name,
+          email: invoice.customer.email,
+        },
+        theme: {
+          color: '#3b82f6',
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
+  const currencySymbol = getCurrencySymbol(invoice.currency);
+  const canPay = invoice.status === 'sent' || invoice.status === 'overdue';
+
+  return (
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+      <div className="flex items-center gap-2">
+        {error && <p className="text-red-500 text-sm mr-4">{error}</p>}
+        
+        {/* Payment Button */}
+        {canPay && (
+          <button
+            onClick={handlePayment}
+            disabled={isPaying}
+            className="btn-primary bg-green-500 hover:bg-green-600 flex items-center gap-2"
+          >
+            <CreditCardIcon className="h-5 w-5" />
+            {isPaying ? 'Processing...' : `Pay ${currencySymbol}${invoice.total_amount.toFixed(2)}`}
+          </button>
+        )}
+
+        {/* PDF Download */}
+        <InvoicePDFLink invoice={invoice} />
+
+        {/* Other Actions */}
+        <button
+          onClick={() => router.push(`/invoices/${invoice.id}/edit`)}
+          className="btn-secondary"
+        >
+          <PencilIcon className="h-4 w-4" />
+          Edit
+        </button>
+        <button className="btn-secondary">
+          <ShareIcon className="h-4 w-4" />
+          Share
+        </button>
+        <button className="btn-primary">
+          <PaperAirplaneIcon className="h-4 w-4" />
+          Send Invoice
+        </button>
+      </div>
+    </>
+  );
+}

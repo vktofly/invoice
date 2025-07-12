@@ -10,7 +10,7 @@ interface Customer {
   [key: string]: any; // Allows for other dynamic properties
 }
 
-const CustomerDetailsPage = ({ params }: { params: { id: string } }) => {
+const CustomerDetailsPage = ({ params }: { params: any }) => {
   const { id } = params;
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +18,7 @@ const CustomerDetailsPage = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
 
   useEffect(() => {
+    const { id } = params;
     async function fetchCustomer() {
       // Reset states on new ID
       setLoading(true);
@@ -28,6 +29,7 @@ const CustomerDetailsPage = ({ params }: { params: { id: string } }) => {
           throw new Error('Failed to fetch customer data.');
         }
         const data = await res.json();
+        console.log('Fetched customer data:', data);
         setCustomer(data.customer || null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred.');
@@ -36,7 +38,7 @@ const CustomerDetailsPage = ({ params }: { params: { id: string } }) => {
       }
     }
     fetchCustomer();
-  }, [id]);
+  }, [params]);
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-600">Error: {error}</div>;

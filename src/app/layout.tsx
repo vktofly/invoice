@@ -16,13 +16,15 @@ export default function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
-        <AuthProvider>
-          <OrganizationProvider>
-            {children}
-          </OrganizationProvider>
-        </AuthProvider>
+    <html lang="en">
+      <body className="bg-gradient-to-br from-indigo-100 via-white to-cyan-100 dark:from-gray-800 dark:via-gray-900 dark:to-black">
+        <div className="min-h-screen text-gray-900 dark:text-gray-100 antialiased">
+          <AuthProvider>
+            <OrganizationProvider>
+              {children}
+            </OrganizationProvider>
+          </AuthProvider>
+        </div>
       </body>
     </html>
   );

@@ -9,7 +9,6 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'vendor' | 'customer'>('customer');
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -26,14 +25,14 @@ export default function RegisterPage() {
       email,
       password,
       options: {
-        data: { full_name: fullName, role },
+        data: { full_name: fullName },
       },
     });
     setLoading(false);
     if (error) {
       setError(error.message);
     } else {
-      router.push('/dashboard');
+      router.push('/choose-role');
     }
   };
 
@@ -65,28 +64,6 @@ export default function RegisterPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center space-x-2 text-sm">
-            <input
-              type="radio"
-              name="role"
-              value="customer"
-              checked={role === 'customer'}
-              onChange={() => setRole('customer')}
-            />
-            <span>Customer</span>
-          </label>
-          <label className="flex items-center space-x-2 text-sm">
-            <input
-              type="radio"
-              name="role"
-              value="vendor"
-              checked={role === 'vendor'}
-              onChange={() => setRole('vendor')}
-            />
-            <span>Vendor</span>
-          </label>
-        </div>
         <label className="flex items-center space-x-2 text-xs">
           <input
             type="checkbox"

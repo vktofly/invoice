@@ -1,6 +1,6 @@
 "use client";
 // This layout is for authenticated/protected pages only. It includes Sidebar and Navbar.
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Sidebar from '@/components/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +11,7 @@ const Navbar = dynamic(() => import('@/components/Navbar'), { ssr: false });
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && user && !user.user_metadata?.role) {
@@ -21,11 +22,13 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   if (loading) return null;
 
   return (
-    <div>
-      <Navbar />
-      <div className="flex pt-16">
-        <Sidebar />
-        <main className="w-full lg:ml-64">{children}</main>
+    <div className="min-h-screen">
+      <Sidebar />
+      <div className="flex flex-col lg:ml-64">
+        <Navbar onMenuButtonClick={() => setSidebarOpen(!isSidebarOpen)} />
+        <main className="flex-grow p-6 pt-20">
+          {children}
+        </main>
       </div>
     </div>
   );

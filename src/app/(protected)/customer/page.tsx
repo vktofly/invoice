@@ -1,6 +1,9 @@
+'use client'
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-// import { HiOutlineUserAdd } from "react-icons/hi"; // Removed to fix linter error
+import { PlusIcon, EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+
+import CustomerPageSkeleton from "@/components/skeletons/CustomerPageSkeleton";
 
 interface Customer {
   id: string;
@@ -54,77 +57,71 @@ const CustomersPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-10">
-      <div className="w-full max-w-2xl flex flex-col items-center">
-        <h2 className="text-2xl font-semibold mb-2">Business is no fun without people.</h2>
-        <p className="text-gray-600 mb-6 text-center">Create and manage your contacts, all in one place.</p>
+    <div className="bg-white/40 backdrop-blur-lg rounded-xl border border-white/20 shadow-lg p-6 dark:bg-gray-800/40 dark:border-gray-700">
+      <header className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Customers</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Create and manage your contacts, all in one place.</p>
+        </div>
         <Link href="/customer/new">
-          <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 flex items-center gap-2 mb-2">
-            <span className="text-lg">➕</span>
-            CREATE NEW CUSTOMER
+          <button className="btn-primary bg-blue-500 hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800 flex items-center gap-2">
+            <PlusIcon className="h-5 w-5" />
+            New Customer
           </button>
         </Link>
-        <Link href="#" className="text-blue-600 hover:underline mb-4 text-sm">Click here to import customers from file</Link>
-        <div className="flex gap-2 mb-8">
-          {/* Social/other icons can be added here if needed */}
+      </header>
+
+      {loading ? (
+        <CustomerPageSkeleton />
+      ) : hasCustomers ? (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse">
+            <thead>
+              <tr className="border-b border-white/20 dark:border-gray-700">
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">Name</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">Email</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">Type</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">Company</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {customers.map((c) => (
+                <tr key={c.id} className="border-b border-white/20 hover:bg-white/50 dark:border-gray-700 dark:hover:bg-gray-700/50">
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-800 dark:text-gray-100">{c.display_name || c.name}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-gray-400">{c.email}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-gray-400">{c.customer_type}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-gray-400">{c.company_name}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="flex items-center space-x-4">
+                      <button onClick={() => handleView(c.id)} className="text-blue-500 hover:underline dark:text-blue-400">
+                        <EyeIcon className="h-5 w-5" />
+                      </button>
+                      <button onClick={() => handleEdit(c.id)} className="text-yellow-500 hover:underline dark:text-yellow-400">
+                        <PencilIcon className="h-5 w-5" />
+                      </button>
+                      <button onClick={() => handleDelete(c.id)} className="text-red-500 hover:underline dark:text-red-400">
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
-      <div className="w-full max-w-3xl mt-12">
-        {loading ? (
-          <div className="text-center text-gray-500 py-12">Loading customers...</div>
-        ) : hasCustomers ? (
-          <div>
-            <h3 className="text-lg font-semibold text-center mb-6">Your Customers</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded shadow">
-                <thead>
-                  <tr className="bg-gray-100 text-gray-700">
-                    <th className="px-4 py-2 text-left">Name</th>
-                    <th className="px-4 py-2 text-left">Email</th>
-                    <th className="px-4 py-2 text-left">Type</th>
-                    <th className="px-4 py-2 text-left">Company</th>
-                    <th className="px-4 py-2 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customers.map((c) => (
-                    <tr key={c.id} className="border-b">
-                      <td className="px-4 py-2">{c.display_name || c.name}</td>
-                      <td className="px-4 py-2">{c.email}</td>
-                      <td className="px-4 py-2">{c.customer_type}</td>
-                      <td className="px-4 py-2">{c.company_name}</td>
-                      <td className="px-4 py-2">
-                        <button className="text-blue-600 hover:underline mr-2" onClick={() => handleView(c.id)}>View</button>
-                        <button className="text-yellow-600 hover:underline mr-2" onClick={() => handleEdit(c.id)}>Edit</button>
-                        <button className="text-red-600 hover:underline" onClick={() => handleDelete(c.id)}>Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : (
-          <>
-            <h3 className="text-lg font-semibold text-center mb-6">Types of contacts</h3>
-            <div className="flex justify-center gap-12">
-              <div className="border rounded-lg p-6 w-64 flex flex-col items-center bg-white shadow">
-                <div className="text-3xl mb-2">🏢</div>
-                <div className="font-medium mb-2">COMPANY</div>
-                <ul className="text-gray-600 text-sm mb-2">
-                  <li>CONTACT PERSON 1</li>
-                  <li>CONTACT PERSON 2</li>
-                  <li>CONTACT PERSON 3</li>
-                </ul>
-              </div>
-              <div className="border rounded-lg p-6 w-64 flex flex-col items-center bg-white shadow">
-                <div className="text-3xl mb-2">👤</div>
-                <div className="font-medium mb-2">An individual person or a company can be added as a customer.</div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+      ) : (
+        <div className="text-center py-20 border-dashed border-2 border-white/20 rounded-lg dark:border-gray-700">
+          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">No Customers Yet</h3>
+          <p className="text-gray-500 dark:text-gray-400 mt-2 mb-6">Get started by adding your first customer.</p>
+          <Link href="/customer/new">
+            <button className="btn-primary bg-blue-500 hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800 flex items-center gap-2 mx-auto">
+              <PlusIcon className="h-5 w-5" />
+              Create Customer
+            </button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

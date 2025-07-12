@@ -13,20 +13,12 @@ const roles = [
   },
   {
     key: "vendor",
-    label: "Vendor",
+label: "Vendor",
     icon: (
       <span className="inline-block text-3xl">🏪</span>
     ),
     desc: "Full access to manage invoices and more."
   },
-  {
-    key: "user",
-    label: "User",
-    icon: (
-      <span className="inline-block text-3xl">👤</span>
-    ),
-    desc: "Full access to all features."
-  }
 ];
 
 export default function ChooseRolePage() {
@@ -51,8 +43,11 @@ export default function ChooseRolePage() {
         setLoading(false);
         return;
       }
-      // Reload the page to refresh user metadata and trigger redirect
-      window.location.reload();
+      if (role === 'vendor') {
+        router.push('/home');
+      } else {
+        router.push('/customer');
+      }
     } catch (err: any) {
       setError(err.message || "Failed to set role");
       setLoading(false);

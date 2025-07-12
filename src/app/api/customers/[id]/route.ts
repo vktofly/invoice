@@ -2,102 +2,83 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
-  const data = await req.json();
-
-  // Extract all updatable fields
-  const updateData = {
-    address: data.address,
-    city: data.city,
-    state: data.state,
-    zip: data.zip,
-    country: data.country,
-    gstin: data.gstin,
-    name: data.name,
-    email: data.email,
-    customer_type: data.customer_type,
-    salutation: data.salutation,
-    first_name: data.first_name,
-    last_name: data.last_name,
-    company_name: data.company_name,
-    display_name: data.display_name,
-    currency: data.currency,
-    work_phone: data.work_phone,
-    mobile: data.mobile,
-    pan: data.pan,
-    payment_terms: data.payment_terms,
-    portal_language: data.portal_language,
-    billing_attention: data.billing_attention,
-    billing_country: data.billing_country,
-    billing_address1: data.billing_address1,
-    billing_address2: data.billing_address2,
-    billing_city: data.billing_city,
-    billing_state: data.billing_state,
-    billing_pin: data.billing_pin,
-    billing_phone: data.billing_phone,
-    billing_fax: data.billing_fax,
-    shipping_attention: data.shipping_attention,
-    shipping_country: data.shipping_country,
-    shipping_address1: data.shipping_address1,
-    shipping_address2: data.shipping_address2,
-    shipping_city: data.shipping_city,
-    shipping_state: data.shipping_state,
-    shipping_pin: data.shipping_pin,
-    shipping_phone: data.shipping_phone,
-    shipping_fax: data.shipping_fax,
-    website: data.website,
-    department: data.department,
-    designation: data.designation,
-    twitter: data.twitter,
-    skype: data.skype,
-    facebook: data.facebook
-  };
-
-  // Get the authenticated user
+// GET a single customer by ID
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createRouteHandlerClient({ cookies });
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  const { id } = params;
 
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-
-  // Update customer - RLS will ensure user can only update their own customers
   const { data: customer, error } = await supabase
     .from('customers')
-    .update(updateData)
+    .select('*')
     .eq('id', id)
-    .eq('user_id', user.id) // Use UUID string directly as text
-    .select()
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: error.message }, { status: 404 });
   }
 
-  if (!customer) {
-    return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
-  }
-
-  return NextResponse.json({ success: true, customer });
+  return NextResponse.json({ customer });
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
-  // Get the authenticated user
+// UPDATE a customer by ID
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createRouteHandlerClient({ cookies });
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  const { id } = params;
+  
+  try {
+    const customerData = await req.json();
+
+    // Prepare the parameters for the RPC call
+    const rpcParams = {
+      p_customer_id: id,
+      p_customer_type: customerData.customer_type,
+      p_salutation: customerData.salutation,
+      p_first_name: customerData.first_name,
+      p_last_name: customerData.last_name,
+      p_company_name: customerData.company_name,
+      p_display_name: customerData.display_name,
+      p_currency: customerData.currency,
+      p_email: customerData.email,
+      p_work_phone: customerData.work_phone,
+      p_mobile: customerData.mobile,
+      p_gstin: customerData.gstin,
+      p_pan: customerData.pan,
+      p_payment_terms: customerData.payment_terms,
+      p_website: customerData.website,
+      p_billing_attention: customerData.billing_attention,
+      p_billing_country: customerData.billing_country,
+      p_billing_address1: customerData.billing_address1,
+      p_billing_address2: customerData.billing_address2,
+      p_billing_city: customerData.billing_city,
+      p_billing_state: customerData.billing_state,
+      p_billing_pin: customerData.billing_pin,
+      p_billing_phone: customerData.billing_phone,
+      p_billing_fax: customerData.billing_fax,
+      p_shipping_attention: customerData.shipping_attention,
+      p_shipping_country: customerData.shipping_country,
+      p_shipping_address1: customerData.shipping_address1,
+      p_shipping_address2: customerData.shipping_address2,
+      p_shipping_city: customerData.shipping_city,
+      p_shipping_state: customerData.shipping_state,
+      p_shipping_pin: customerData.shipping_pin,
+      p_shipping_phone: customerData.shipping_phone,
+      p_shipping_fax: customerData.shipping_fax
+    };
+
+    // Call the PostgreSQL function
+    const { error } = await supabase.rpc('update_customer_with_addresses', rpcParams);
+
+    if (error) {
+      console.error('Supabase RPC error:', error);
+      return NextResponse.json({ error: `Failed to update customer: ${error.message}` }, { status: 400 });
+    }
+
+    // Since RPC doesn't return the updated record, we'll just return a success message
+    // or fetch the customer data again if needed.
+    return NextResponse.json({ message: 'Customer updated successfully' });
+
+  } catch (e: any) {
+    console.error('Error parsing request body or during update:', e);
+    return NextResponse.json({ error: 'Invalid request data or server error.' }, { status: 500 });
   }
-  // Delete customer - RLS will ensure user can only delete their own customers
-  const { error } = await supabase
-    .from('customers')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', user.id);
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
-  return NextResponse.json({ success: true });
 }

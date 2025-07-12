@@ -32,14 +32,23 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Redirect users based on role
+  if (role === 'customer' && !url.pathname.startsWith('/customer')) {
+    url.pathname = '/customer';
+    return NextResponse.redirect(url);
+  } else if (role === 'vendor' && !url.pathname.startsWith('/home')) {
+    url.pathname = '/home';
+    return NextResponse.redirect(url);
+  }
+
   return res;
 }
 
 // Only run middleware for these paths to keep it fast
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*'],
+  matcher: ['/admin/:path*', '/dashboard/:path*', '/customer/:path*', '/home/:path*'],
 };
 
 function isProtectedPath(pathname: string) {
-  return pathname.startsWith('/admin') || pathname.startsWith('/dashboard');
+  return pathname.startsWith('/admin') || pathname.startsWith('/dashboard') || pathname.startsWith('/customer') || pathname.startsWith('/home');
 } 

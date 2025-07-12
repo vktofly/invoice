@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error }, { status: 400 });
   }
 
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
@@ -66,7 +67,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });

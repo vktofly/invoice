@@ -12,6 +12,8 @@ interface User {
   user_metadata?: {
     full_name?: string;
     role?: string;
+    company?: string;
+    address?: string;
   };
 }
 
@@ -24,6 +26,8 @@ export default function ProfilePage() {
 
   const [formData, setFormData] = useState({
     full_name: '',
+    company: '',
+    address: '',
     email: '',
     current_password: '',
     new_password: '',
@@ -44,12 +48,19 @@ export default function ProfilePage() {
         ...prev,
         full_name: user.user_metadata?.full_name || '',
         email: user.email || '',
+        company: user.user_metadata?.company || '',
+        address: user.user_metadata?.address || '',
       }));
       setLoading(false);
     });
   }, [router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -61,7 +72,7 @@ export default function ProfilePage() {
 
     try {
       const { error } = await supabase.auth.updateUser({
-        data: { full_name: formData.full_name }
+        data: { full_name: formData.full_name, company: formData.company, address: formData.address }
       });
 
       if (error) throw error;
@@ -74,7 +85,9 @@ export default function ProfilePage() {
           ...user,
           user_metadata: {
             ...user.user_metadata,
-            full_name: formData.full_name
+            full_name: formData.full_name,
+            company: formData.company,
+            address: formData.address
           }
         });
       }
@@ -165,6 +178,36 @@ export default function ProfilePage() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="Enter your full name"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
+                  Company
+                </label>
+                <input
+                  type="text"
+                  id="company"
+                  name="company"
+                  value={formData.company}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Enter your company name"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                  Billing Address
+                </label>
+                <textarea
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Enter your billing address"
                 />
               </div>
 

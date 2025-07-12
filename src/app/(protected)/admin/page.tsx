@@ -1,13 +1,6 @@
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import RoleProtected from '@/components/RoleProtected';
-
-const DashboardStats = dynamic(() => import('@/components/DashboardStats'), { ssr: false });
-const RevenueTrendChart = dynamic(() => import('@/components/RevenueTrendChart'), { ssr: false });
-const OutstandingAgingChart = dynamic(() => import('@/components/OutstandingAgingChart'), { ssr: false });
-const TopCustomers = dynamic(() => import('@/components/TopCustomers'), { ssr: false });
-const TopProducts = dynamic(() => import('@/components/TopProducts'), { ssr: false });
-const RecentInvoices = dynamic(() => import('@/components/RecentInvoices'), { ssr: false });
+import { DashboardStats, RevenueTrendChart, OutstandingAgingChart, TopCustomers, TopProducts, RecentInvoices } from './AdminDashboard';
 
 export default function AdminDashboardPage() {
   return (

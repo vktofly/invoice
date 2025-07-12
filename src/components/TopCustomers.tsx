@@ -1,76 +1,41 @@
 "use client";
+import React, { useState, useEffect } from 'react';
+import { listTopCustomers } from '@/lib/supabase/customers';
+import { UserGroupIcon } from '@heroicons/react/24/outline';
+import type { TopCustomer } from '@/lib/types';
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
-
-interface Row {
-  client_id: string;
-  name: string;
-  total: number;
-}
-
-export default function TopCustomers() {
-  const [rows, setRows] = useState<Row[]>([]);
+export const TopCustomers = () => {
+  const [customers, setCustomers] = useState<TopCustomer[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      const { data: invoices } = await supabase
-        .from('invoices')
-        .select('client_id,total,status')
-        .eq('status', 'paid');
-      if (!invoices) return;
-
-      const totals: Record<string, number> = {};
-      invoices.forEach((inv: any) => {
-        if (!inv.client_id) return;
-        totals[inv.client_id] = (totals[inv.client_id] || 0) + (inv.total || 0);
-      });
-
-      const clientIds = Object.keys(totals);
-      if (clientIds.length === 0) {
-        setRows([]);
-        return;
-      }
-
-      const { data: clients } = await supabase
-        .from('clients')
-        .select('id,name')
-        .in('id', clientIds);
-      if (!clients) return;
-
-      const tableRows = clients.map((c: any) => ({ client_id: c.id, name: c.name, total: totals[c.id] || 0 }));
-      tableRows.sort((a, b) => b.total - a.total);
-      setRows(tableRows.slice(0, 5));
-    }
-    load();
+    const fetchCustomers = async () => {
+      const data = await listTopCustomers();
+      setCustomers(data);
+      setLoading(false);
+    };
+    fetchCustomers();
   }, []);
 
   return (
-    <div className="rounded-lg border bg-white p-4 shadow-sm">
-      <h2 className="text-lg font-semibold">Top Customers</h2>
-      <table className="mt-4 w-full text-sm">
-        <thead>
-          <tr className="text-left text-gray-500">
-            <th className="px-2 py-1">Client</th>
-            <th className="px-2 py-1 text-right">Revenue</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.client_id} className="border-t">
-              <td className="px-2 py-2">{r.name}</td>
-              <td className="px-2 py-2 text-right">${r.total.toFixed(2)}</td>
-            </tr>
+    <div className="bg-white/40 backdrop-blur-lg rounded-xl border border-white/20 shadow-lg p-6 dark:bg-gray-800/40 dark:border-gray-700">
+      <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
+        <UserGroupIcon className="h-6 w-6 inline-block mr-2" />
+        Top Customers
+      </h3>
+      {loading ? (
+        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+      ) : (
+        <ul className="divide-y divide-white/20 dark:divide-gray-700">
+          {customers.map((customer) => (
+            <li key={customer.customer_id} className="py-3 flex justify-between items-center">
+              <span className="font-medium text-gray-800 dark:text-gray-100">{customer.name}</span>
+              <span className="text-gray-600 dark:text-gray-300">₹{customer.total_invoiced.toLocaleString()}</span>
+            </li>
           ))}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={2} className="px-2 py-4 text-center text-gray-500">
-                No data
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+        </ul>
+      )}
     </div>
   );
-} 
+};
+

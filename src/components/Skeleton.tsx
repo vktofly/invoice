@@ -1,18 +1,16 @@
-import React from "react";
+import React from 'react';
 
-interface SkeletonProps {
-  width?: string;
-  height?: string;
-  rounded?: string;
-  className?: string;
-}
-
-export default function Skeleton({ width = "w-full", height = "h-6", rounded = "rounded-md", className = "" }: SkeletonProps) {
+/**
+ * A reusable skeleton loader component with a pulsing animation.
+ * @param className - Additional classes to apply for custom width, height, etc.
+ */
+const Skeleton = ({ className }: { className?: string }) => {
   return (
     <div
-      className={`bg-gray-200 animate-pulse ${width} ${height} ${rounded} ${className}`}
-      aria-busy="true"
-      aria-label="Loading..."
+      className={`animate-pulse rounded-md bg-gray-200 ${className}`}
+      data-testid="skeleton"
     />
   );
-} 
+};
+
+export default Skeleton;

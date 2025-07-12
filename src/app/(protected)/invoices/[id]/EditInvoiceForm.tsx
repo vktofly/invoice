@@ -1,14 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
+import BillToShipTo from '@/components/invoice/BillToShipTo';
 
 const ItemSchema = z.object({
   description: z.string().nonempty(),
   quantity: z.number().positive(),
   unit_price: z.number().nonnegative(),
   tax_rate: z.number().nonnegative(),
+});
+
+const AddressSchema = z.object({
+  id: z.string(),
+  address_line1: z.string(),
+  address_line2: z.string().optional(),
+  city: z.string(),
+  state: z.string(),
+  postal_code: z.string(),
+  country: z.string(),
+  is_default_billing: z.boolean().optional(),
+  is_default_shipping: z.boolean().optional(),
+  created_at: z.string().optional(),
 });
 
 const schema = z.object({
@@ -19,6 +33,10 @@ const schema = z.object({
   payment_terms: z.string().optional(),
   notes: z.string().optional(),
   items: z.array(ItemSchema).min(1),
+  billing_address_id: z.string().optional().nullable(),
+  shipping_address_id: z.string().optional().nullable(),
+  billing_address: AddressSchema.nullable().optional(),
+  shipping_address: AddressSchema.nullable().optional(),
 });
 
 interface Props {
@@ -27,6 +45,7 @@ interface Props {
 
 export default function EditInvoiceForm({ invoice }: Props) {
   const router = useRouter();
+  const [customers, setCustomers] = useState<any[]>([]);
   const [form, setForm] = useState(() => ({
     customer_id: invoice.customer_id || '',
     number: invoice.number || '',
@@ -34,10 +53,24 @@ export default function EditInvoiceForm({ invoice }: Props) {
     due_date: invoice.due_date?.substr(0, 10) || '',
     payment_terms: invoice.payment_terms || '',
     notes: invoice.notes || '',
+    billing_address_id: invoice.billing_address_id || null,
+    shipping_address_id: invoice.shipping_address_id || null,
+    billing_address: invoice.billing_address || null,
+    shipping_address: invoice.shipping_address || null,
   }));
   const [items, setItems] = useState(invoice.invoice_items || []);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    const res = await fetch('/api/customers');
+    const data = await res.json();
+    setCustomers(data.customers || []);
+  };
 
   const subtotal = items.reduce((sum: number, it: any) => sum + it.quantity * it.unit_price, 0);
   const taxTotal = items.reduce(
@@ -80,6 +113,8 @@ export default function EditInvoiceForm({ invoice }: Props) {
         tax: taxTotal,
         total: grandTotal,
         items,
+        billing_address_id: form.billing_address_id,
+        shipping_address_id: form.shipping_address_id,
       }),
     });
     setLoading(false);
@@ -105,6 +140,22 @@ export default function EditInvoiceForm({ invoice }: Props) {
             className="w-full rounded border px-3 py-2"
           />
         </div>
+
+        <BillToShipTo
+          customers={customers}
+          customerId={form.customer_id}
+          form={form}
+          setForm={setForm}
+          fetchCustomers={fetchCustomers}
+        />
+
+        <BillToShipTo
+          customers={customers}
+          customerId={form.customer_id}
+          form={form}
+          setForm={setForm}
+          fetchCustomers={fetchCustomers}
+        />
         <div className="flex gap-4">
           <div className="flex-1">
             <label className="block text-sm mb-1">Issue Date</label>
