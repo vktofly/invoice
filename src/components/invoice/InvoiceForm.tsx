@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, Fragment, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
@@ -26,7 +26,7 @@ const ItemSchema = z.object({
   quantity: z.number().positive('Quantity must be positive'),
   unit_price: z.number().nonnegative('Price cannot be negative'),
   tax_rate: z.number().min(0).max(100, 'Tax rate must be between 0-100'),
-  discount_type: z.enum(['percentage', 'fixed']).optional(),
+  discount_type: z.enum(['percentage', 'fixed']).optional().default('fixed'),
   discount_amount: z.number().nonnegative('Discount cannot be negative').optional(),
 });
 
@@ -95,7 +95,7 @@ const defaultInitialState: FormState = {
   customer_id: '',
   issue_date: new Date().toISOString().split('T')[0],
   due_date: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0],
-  items: [{ description: '', quantity: 1, unit_price: 0, tax_rate: 0, discount_amount: 0 }],
+  items: [{ description: '', quantity: 1, unit_price: 0, tax_rate: 0, discount_type: 'fixed', discount_amount: 0 }],
   notes: 'Thank you for your business!',
   logo_url: '',
   color_theme: '#4f46e5',
@@ -377,7 +377,7 @@ export default function InvoiceForm({ initialInvoice }: { initialInvoice?: Invoi
   };
 
   const addItem = () => {
-    setFormState(prev => ({ ...prev, items: [...prev.items, { description: '', quantity: 1, unit_price: 0, tax_rate: 0, discount_amount: 0 }] }));
+    setFormState(prev => ({ ...prev, items: [...prev.items, { description: '', quantity: 1, unit_price: 0, tax_rate: 0, discount_type: 'fixed', discount_amount: 0 }] }));
   };
 
   const removeItem = (index: number) => {
@@ -566,40 +566,59 @@ export default function InvoiceForm({ initialInvoice }: { initialInvoice?: Invoi
     }
   };
 
-  const subtotal = formState.items.reduce((acc, item) => {
-    const itemTotal = item.quantity * item.unit_price;
-    let discount = 0;
-    if (item.discount_type === 'percentage') {
-      discount = itemTotal * ((item.discount_amount || 0) / 100);
-    } else if (item.discount_type === 'fixed') {
-      discount = item.discount_amount || 0;
-    }
-    return acc + itemTotal - discount;
-  }, 0);
+  const {
+    subtotal,
+    totalItemDiscount,
+    totalTax,
+    overallDiscount,
+    total,
+    balanceDue
+  } = useMemo(() => {
+    let sub = 0;
+    let itemDiscountTotal = 0;
+    let taxTotal = 0;
 
-  const totalTax = formState.items.reduce((acc, item) => {
-    const itemTotal = item.quantity * item.unit_price;
-    let discount = 0;
-    if (item.discount_type === 'percentage') {
-      discount = itemTotal * ((item.discount_amount || 0) / 100);
-    } else if (item.discount_type === 'fixed') {
-      discount = item.discount_amount || 0;
-    }
-    const taxableAmount = itemTotal - discount;
-    return acc + (taxableAmount * (item.tax_rate / 100));
-  }, 0);
+    formState.items.forEach(item => {
+      const itemSubtotal = (item.quantity || 0) * (item.unit_price || 0);
+      let itemDiscount = 0;
+      if (item.discount_type === 'percentage') {
+        itemDiscount = itemSubtotal * ((item.discount_amount || 0) / 100);
+      } else if (item.discount_type === 'fixed') {
+        itemDiscount = item.discount_amount || 0;
+      }
+      
+      const taxableAmount = itemSubtotal - itemDiscount;
+      const taxAmount = taxableAmount * ((item.tax_rate || 0) / 100);
 
-  const preDiscountTotal = subtotal + totalTax + (formState.shipping_cost || 0);
+      sub += itemSubtotal;
+      itemDiscountTotal += itemDiscount;
+      taxTotal += taxAmount;
+    });
+
+    const totalAfterItemDiscounts = sub - itemDiscountTotal;
+    const totalWithTax = totalAfterItemDiscounts + taxTotal;
+    const totalWithShipping = totalWithTax + (formState.shipping_cost || 0);
+
+    let overallDisc = 0;
+    if (formState.discount_type === 'percentage') {
+      overallDisc = totalWithShipping * ((formState.discount_amount || 0) / 100);
+    } else if (formState.discount_type === 'fixed') {
+      overallDisc = formState.discount_amount || 0;
+    }
+
+    const grandTotal = totalWithShipping - overallDisc;
+    const balDue = grandTotal + (outstandingBalance || 0);
+
+    return {
+      subtotal: sub,
+      totalItemDiscount: itemDiscountTotal,
+      totalTax: taxTotal,
+      overallDiscount: overallDisc,
+      total: grandTotal,
+      balanceDue: balDue,
+    };
+  }, [formState.items, formState.shipping_cost, formState.discount_type, formState.discount_amount, outstandingBalance]);
   
-  let overallDiscount = 0;
-  if (formState.discount_type === 'percentage') {
-    overallDiscount = preDiscountTotal * ((formState.discount_amount || 0) / 100);
-  } else if (formState.discount_type === 'fixed') {
-    overallDiscount = formState.discount_amount || 0;
-  }
-
-  const total = preDiscountTotal - overallDiscount;
-  const balanceDue = total + outstandingBalance;
   const currencySymbol = getCurrencySymbol(formState.currency || 'USD');
 
   const editorPanel = (
@@ -690,7 +709,7 @@ export default function InvoiceForm({ initialInvoice }: { initialInvoice?: Invoi
             
             <div className="mt-6">
               <h3 className="text-md font-semibold mb-4 text-gray-800">Shipping Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label htmlFor="shipping_method" className="block text-sm font-medium text-gray-600 mb-1">Method</label>
                     <input id="shipping_method" type="text" name="shipping_method" placeholder="e.g. Courier" value={formState.shipping_method} onChange={handleInputChange} className="input" />
@@ -698,10 +717,6 @@ export default function InvoiceForm({ initialInvoice }: { initialInvoice?: Invoi
                 <div>
                     <label htmlFor="tracking_number" className="block text-sm font-medium text-gray-600 mb-1">Tracking #</label>
                     <input id="tracking_number" type="text" name="tracking_number" placeholder="Tracking Number" value={formState.tracking_number} onChange={handleInputChange} className="input" />
-                </div>
-                <div>
-                    <label htmlFor="shipping_cost" className="block text-sm font-medium text-gray-600 mb-1">Cost</label>
-                    <input id="shipping_cost" type="number" name="shipping_cost" value={formState.shipping_cost} onChange={e => setFormState(prev => ({ ...prev, shipping_cost: parseFloat(e.target.value) || 0 }))} className="input" />
                 </div>
               </div>
             </div>
@@ -720,18 +735,20 @@ export default function InvoiceForm({ initialInvoice }: { initialInvoice?: Invoi
                 className="input w-full" 
               />
             </div>
-            <div>
-              <label htmlFor="due_date" className="block text-sm font-medium text-gray-600 mb-1">Due Date</label>
-              <input 
-                id="due_date"
-                type="date" 
-                name="due_date" 
-                value={formState.due_date} 
-                onChange={handleInputChange} 
-                className={`input w-full ${!isCustomDueDate && 'bg-gray-200'}`}
-                readOnly={!isCustomDueDate}
-              />
-            </div>
+            {!formState.is_recurring && (
+              <div>
+                <label htmlFor="due_date" className="block text-sm font-medium text-gray-600 mb-1">Due Date</label>
+                <input 
+                  id="due_date"
+                  type="date" 
+                  name="due_date" 
+                  value={formState.due_date} 
+                  onChange={handleInputChange} 
+                  className="input w-full"
+                  readOnly={!isCustomDueDate}
+                />
+              </div>
+            )}
           </div>
       </div>
 
@@ -802,12 +819,22 @@ export default function InvoiceForm({ initialInvoice }: { initialInvoice?: Invoi
                     <span>{currencySymbol}{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
+                    <span>Total Item Discount:</span>
+                    <span>-{currencySymbol}{totalItemDiscount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
                     <span>Total Tax:</span>
                     <span>{currencySymbol}{totalTax.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
-                    <span>Shipping:</span>
-                    <span>{currencySymbol}{(formState.shipping_cost || 0).toFixed(2)}</span>
+                <div className="flex justify-between items-center text-gray-600">
+                  <span>Shipping:</span>
+                  <input
+                    type="number"
+                    name="shipping_cost"
+                    value={formState.shipping_cost || 0}
+                    onChange={e => setFormState(prev => ({ ...prev, shipping_cost: parseFloat(e.target.value) || 0 }))}
+                    className="input w-24 text-right"
+                  />
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Overall Discount:</span>
@@ -824,8 +851,8 @@ export default function InvoiceForm({ initialInvoice }: { initialInvoice?: Invoi
                     <input
                       type="number"
                       name="discount_amount"
-                      value={formState.discount_amount}
-                      onChange={handleInputChange}
+                      value={formState.discount_amount || 0}
+                      onChange={e => setFormState(prev => ({ ...prev, discount_amount: parseFloat(e.target.value) || 0 }))}
                       className="input w-24"
                     />
                   </div>
@@ -890,64 +917,6 @@ export default function InvoiceForm({ initialInvoice }: { initialInvoice?: Invoi
             </button>
           </div>
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Recurring Invoice</h3>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="is_recurring"
-                id="is_recurring"
-                checked={formState.is_recurring}
-                onChange={e => setFormState(prev => ({ ...prev, is_recurring: e.target.checked }))}
-                className="h-4 w-4 text-indigo-500 focus:ring-indigo-400 border-gray-300 rounded"
-              />
-              <label htmlFor="is_recurring" className="ml-2 block text-sm text-gray-800">
-                This is a recurring invoice
-              </label>
-            </div>
-            {formState.is_recurring && (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="recurring_frequency" className="block text-sm font-medium text-gray-600 mb-1">Frequency</label>
-                  <select
-                    id="recurring_frequency"
-                    name="recurring_frequency"
-                    value={formState.recurring_frequency}
-                    onChange={handleInputChange}
-                    className="input w-full"
-                  >
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="quarterly">Quarterly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="recurring_start_date" className="block text-sm font-medium text-gray-600 mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    id="recurring_start_date"
-                    name="recurring_start_date"
-                    value={formState.recurring_start_date}
-                    onChange={handleInputChange}
-                    className="input w-full"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="recurring_end_date" className="block text-sm font-medium text-gray-600 mb-1">End Date (Optional)</label>
-                  <input
-                    type="date"
-                    id="recurring_end_date"
-                    name="recurring_end_date"
-                    value={formState.recurring_end_date || ''}
-                    onChange={handleInputChange}
-                    className="input w-full"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-          <div>
             <h3 className="text-lg font-semibold mb-4 text-gray-800">Attachments</h3>
             <div className="flex items-center">
               <input
@@ -967,6 +936,66 @@ export default function InvoiceForm({ initialInvoice }: { initialInvoice?: Invoi
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+          </div>
+          <div className="lg:col-span-2">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Recurring Invoice</h3>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                name="is_recurring"
+                id="is_recurring"
+                checked={formState.is_recurring}
+                onChange={e => setFormState(prev => ({ ...prev, is_recurring: e.target.checked }))}
+                className="h-4 w-4 text-indigo-500 focus:ring-indigo-400 border-gray-300 rounded"
+              />
+              <label htmlFor="is_recurring" className="ml-2 block text-sm text-gray-800">
+                This is a recurring invoice
+              </label>
+            </div>
+            {formState.is_recurring && (
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label htmlFor="recurring_frequency" className="block text-sm font-medium text-gray-600 mb-1">Frequency</label>
+                  <select
+                    id="recurring_frequency"
+                    name="recurring_frequency"
+                    value={formState.recurring_frequency}
+                    onChange={handleInputChange}
+                    className="input w-full"
+                  >
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="recurring_start_date" className="block text-sm font-medium text-gray-600 mb-1">Start Date</label>
+                    <input
+                      type="date"
+                      id="recurring_start_date"
+                      name="recurring_start_date"
+                      value={formState.recurring_start_date}
+                      onChange={handleInputChange}
+                      className="input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="recurring_end_date" className="block text-sm font-medium text-gray-600 mb-1">End Date (Optional)</label>
+                    <input
+                      type="date"
+                      id="recurring_end_date"
+                      name="recurring_end_date"
+                      value={formState.recurring_end_date || ''}
+                      onChange={handleInputChange}
+                      className="input w-full"
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1083,6 +1112,10 @@ export default function InvoiceForm({ initialInvoice }: { initialInvoice?: Invoi
                 <div className="flex justify-between text-gray-600">
                     <p>Subtotal:</p>
                     <p>{currencySymbol}{subtotal.toFixed(2)}</p>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                    <p>Item Discounts:</p>
+                    <p>-{currencySymbol}{totalItemDiscount.toFixed(2)}</p>
                 </div>
                 <div className="flex justify-between text-gray-600">
                     <p>Tax:</p>
@@ -1209,6 +1242,7 @@ export default function InvoiceForm({ initialInvoice }: { initialInvoice?: Invoi
         onSaveAndSend={onSaveAndSend}
         onSaveAsTemplate={handleSaveAsTemplate}
         onDownload={handleDownload}
+        isRecurring={formState.is_recurring}
       />
     </>
   );
