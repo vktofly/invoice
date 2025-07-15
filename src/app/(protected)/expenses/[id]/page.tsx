@@ -40,7 +40,7 @@ export default function ExpenseDetailPage() {
       <div className="p-6 bg-white rounded-lg shadow-sm border">
         <p><strong>Vendor:</strong> {expense.vendor_name}</p>
         <p><strong>Description:</strong> {expense.description}</p>
-        <p><strong>Amount:</strong> ${expense.amount.toFixed(2)}</p>
+        <p><strong>Amount:</strong> ${(expense.amount || 0).toFixed(2)}</p>
         <p><strong>Date:</strong> {new Date(expense.expense_date).toLocaleDateString()}</p>
         <p><strong>Category:</strong> {expense.category}</p>
         {expense.receipt_url && <p><a href={expense.receipt_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">View Receipt</a></p>}

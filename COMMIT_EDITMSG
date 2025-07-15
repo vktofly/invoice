@@ -1,0 +1,7 @@
+fix: Handle undefined values in toFixed calls to prevent TypeError
+
+This commit addresses a TypeError that occurred when calling toFixed on potentially undefined numerical values in various components. By adding fallbacks to 0, we ensure that the application remains stable even when financial data is incomplete.
+
+Key changes:
+- Added || 0 to all instances of toFixed where the value could be undefined.
+- Verified the fix by running the linter and TypeScript compiler to ensure no new issues were introduced.

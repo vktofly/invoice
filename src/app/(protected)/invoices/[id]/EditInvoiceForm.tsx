@@ -4,37 +4,14 @@ import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import BillToShipTo from '@/components/invoice/BillToShipTo';
+import { InvoiceSchema, ItemSchema, AddressSchema } from '@/lib/schemas';
 
-const ItemSchema = z.object({
-  description: z.string().nonempty(),
-  quantity: z.number().positive(),
-  unit_price: z.number().nonnegative(),
-  tax_rate: z.number().nonnegative(),
-});
-
-const AddressSchema = z.object({
-  id: z.string(),
-  address_line1: z.string(),
-  address_line2: z.string().optional(),
-  city: z.string(),
-  state: z.string(),
-  postal_code: z.string(),
-  country: z.string(),
-  is_default_billing: z.boolean().optional(),
-  is_default_shipping: z.boolean().optional(),
-  created_at: z.string().optional(),
-});
-
-const schema = z.object({
-  customer_id: z.string(),
-  number: z.string().optional(),
-  issue_date: z.string(),
-  due_date: z.string(),
-  payment_terms: z.string().optional(),
-  notes: z.string().optional(),
+const schema = InvoiceSchema.omit({ 
+  items: true, 
+  billing_address: true, 
+  shipping_address: true 
+}).extend({
   items: z.array(ItemSchema).min(1),
-  billing_address_id: z.string().optional().nullable(),
-  shipping_address_id: z.string().optional().nullable(),
   billing_address: AddressSchema.nullable().optional(),
   shipping_address: AddressSchema.nullable().optional(),
 });

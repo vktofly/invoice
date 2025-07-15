@@ -1,4 +1,3 @@
-import supabase from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
@@ -21,7 +20,7 @@ export async function GET(request: NextRequest) {
   // Fetch invoices with all related data in a single query
   let invoiceQuery = supabase.from('invoices').select(`
     *,
-    customer:customers!invoices_customer_id_fkey(*),
+    customer:customers (*),
     billing_address:customer_addresses!invoices_billing_address_id_fkey (*),
     shipping_address:customer_addresses!invoices_shipping_address_id_fkey (*),
     invoice_items (*)
@@ -127,8 +126,8 @@ export async function POST(request: NextRequest) {
     number, 
     owner: user.id, 
     currency: currency || 'USD',
-    billing_address_id: billing_address_id || null,
-    shipping_address_id: shipping_address_id || null,
+    billing_address_id,
+    shipping_address_id,
     subtotal,
     tax_amount: total_tax,
     total_amount: calculated_total,

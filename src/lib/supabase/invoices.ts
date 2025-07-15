@@ -43,3 +43,13 @@ export async function listInvoices() {
     customer: invoice.customers && invoice.customers.length > 0 ? invoice.customers[0].name : 'Unknown',
   }));
 }
+
+export async function getNextInvoiceNumber() {
+    const { data, error } = await supabase.rpc('get_next_invoice_number');
+
+    if (error) {
+        console.error('Error fetching next invoice number:', error);
+        return null;
+    }
+    return data;
+}

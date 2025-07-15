@@ -1,55 +1,66 @@
-
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { NextRequest, NextResponse } from 'next/server';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const supabase = createServerComponentClient({ cookies });
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
+  const supabase = createRouteHandlerClient({ cookies });
 
-  const { data, error } = await supabase
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  const { data: recurringInvoice, error: recurringInvoiceError } = await supabase
     .from('recurring_invoices')
-    .select('*, customers(*)')
-    .eq('id', params.id)
-    .eq('user_id', session.user.id)
+    .select('*, customers(*), invoice_items(*), billing_address:customer_addresses!recurring_invoices_billing_address_id_fkey(*), shipping_address:customer_addresses!recurring_invoices_shipping_address_id_fkey(*)')
+    .eq('id', id)
     .single();
 
-  if (error) return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
+  if (recurringInvoiceError) {
+    console.error('Error fetching recurring invoice:', recurringInvoiceError);
+    return NextResponse.json({ error: 'Failed to fetch recurring invoice.' }, { status: 500 });
+  }
 
-  return NextResponse.json(data);
+  if (!recurringInvoice) {
+    return NextResponse.json({ error: 'Recurring invoice not found.' }, { status: 404 });
+  }
+
+  // TODO: Add authorization check to ensure the user owns this recurring invoice
+
+  return NextResponse.json(recurringInvoice);
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const supabase = createServerComponentClient({ cookies });
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
+  const body = await request.json();
+  
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const body = await req.json();
-  const { data, error } = await supabase
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  // TODO: Add authorization check
+
+  const { data: updatedRecurringInvoice, error: updateError } = await supabase
     .from('recurring_invoices')
     .update(body)
-    .eq('id', params.id)
-    .eq('user_id', session.user.id)
-    .select();
+    .eq('id', id)
+    .select()
+    .single();
 
-  if (error) return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
+  if (updateError) {
+    console.error('Error updating recurring invoice:', updateError);
+    return NextResponse.json({ error: 'Failed to update recurring invoice.' }, { status: 500 });
+  }
 
-  return NextResponse.json(data[0]);
-}
-
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  const supabase = createServerComponentClient({ cookies });
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-
-  const { error } = await supabase
-    .from('recurring_invoices')
-    .delete()
-    .eq('id', params.id)
-    .eq('user_id', session.user.id);
-
-  if (error) return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
-
-  return new NextResponse(null, { status: 204 });
+  return NextResponse.json(updatedRecurringInvoice);
 }

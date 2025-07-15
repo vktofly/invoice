@@ -1,16 +1,10 @@
-import supabase from '@/lib/supabase/server';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
-
-const ExpenseUpdateSchema = z.object({
-  category: z.string().optional(),
-  description: z.string().optional(),
-  amount: z.number().positive().optional(),
-  expense_date: z.string().nonempty().optional(),
-  receipt_url: z.string().url().optional(),
-});
+import { ExpenseUpdateSchema } from '@/lib/schemas';
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
+  const supabase = createRouteHandlerClient({ cookies });
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response('Unauthorized', { status: 401 });
 
@@ -37,6 +31,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const supabase = createRouteHandlerClient({ cookies });
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response('Unauthorized', { status: 401 });
 

@@ -112,3 +112,37 @@ export type TopCustomer = {
   phone: string;
   total_invoiced: number;
 };
+
+export type RecurringInvoicesSummary = {
+  active_count: number;
+  projected_monthly_revenue: number;
+  projected_yearly_revenue: number;
+};
+
+export type Estimate = {
+  id: string;
+  owner: string;
+  customer_id: string;
+  number: string;
+  status: 'draft' | 'sent' | 'accepted' | 'declined';
+  issue_date: string;
+  expiry_date: string;
+  total_amount: number;
+  subtotal: number;
+  tax_amount: number;
+  tax_rate: number;
+  notes?: string;
+  // Relations
+  customer?: Customer;
+  estimate_items?: EstimateItem[];
+};
+
+export type EstimateItem = {
+  id: string;
+  estimate_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  tax_rate?: number;
+  line_total: number;
+};

@@ -1,54 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
-  // Clone the request URL so we can mutate it without mutating the original
-  const url = req.nextUrl.clone();
-
-  // Initialise Supabase client with the incoming cookie headers
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
-
-  // Retrieve active session
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // If no session, force login on protected routes
-  if (!session) {
-    if (isProtectedPath(url.pathname)) {
-      url.pathname = '/login';
-      return NextResponse.redirect(url);
+  const { pathname } = req.nextUrl;
+
+  if (session) {
+    if (pathname === '/' || pathname === '/login' || pathname === '/register') {
+      return NextResponse.redirect(new URL('/home', req.url));
     }
     return res;
   }
 
-  // Extract role from user metadata (or default to "user")
-  const role = (session.user.user_metadata?.role as string) || 'user';
-
-  // Authorise admin-only routes
-  if (url.pathname.startsWith('/admin') && role !== 'admin') {
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+  // Unauthenticated users
+  const publicPaths = ['/', '/login', '/register', '/reset-password', '/update-password'];
+  if (publicPaths.includes(pathname) || pathname.startsWith('/_next/') || pathname.startsWith('/api/') || pathname.startsWith('/static/')) {
+      return res;
   }
 
-  // Redirect users based on role
-  if (role === 'customer' && !url.pathname.startsWith('/customer')) {
-    url.pathname = '/customer';
-    return NextResponse.redirect(url);
-  } else if (role === 'vendor' && !url.pathname.startsWith('/home')) {
-    url.pathname = '/home';
-    return NextResponse.redirect(url);
-  }
-
-  return res;
+  // If trying to access a protected route, redirect to login
+  const redirectUrl = req.nextUrl.clone();
+  redirectUrl.pathname = '/login';
+  redirectUrl.searchParams.set('redirectedFrom', pathname);
+  return NextResponse.redirect(redirectUrl);
 }
 
-// Only run middleware for these paths to keep it fast
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*', '/customer/:path*', '/home/:path*'],
-};
-
-function isProtectedPath(pathname: string) {
-  return pathname.startsWith('/admin') || pathname.startsWith('/dashboard') || pathname.startsWith('/customer') || pathname.startsWith('/home');
-} 
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+}; 

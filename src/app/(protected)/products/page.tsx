@@ -19,10 +19,19 @@ export default function ProductsPage() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const res = await fetch('/api/products');
-      const data = await res.json();
-      setProducts(data || []);
-      setLoading(false);
+      try {
+        const res = await fetch('/api/products');
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const data = await res.json();
+        setProducts(data || []);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        setProducts([]); // Ensure products is an array in case of error
+      } finally {
+        setLoading(false);
+      }
     };
     fetchProducts();
   }, []);
@@ -57,7 +66,7 @@ export default function ProductsPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{product.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{product.sku}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500 dark:text-gray-400">{product.quantity}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500 dark:text-gray-400">${product.price.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500 dark:text-gray-400">${(product.price || 0).toFixed(2)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <Link href={`/products/${product.id}`} className="text-blue-500 hover:underline dark:text-blue-400">View</Link>
                   </td>

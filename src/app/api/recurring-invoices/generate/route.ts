@@ -1,55 +1,72 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { getRecurringInvoiceById } from '@/lib/supabase/recurring_invoices';
+import { getNextInvoiceNumber } from '@/lib/supabase/invoices';
 
-import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
+export async function POST(request: NextRequest) {
+  const { recurring_invoice_id } = await request.json();
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  if (!recurring_invoice_id) {
+    return NextResponse.json({ error: 'Recurring invoice ID is required' }, { status: 400 });
+  }
 
-export async function POST() {
-  const { data: recurringInvoices, error } = await supabase
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  const recurringInvoice = await getRecurringInvoiceById(recurring_invoice_id);
+
+  if (!recurringInvoice) {
+    return NextResponse.json({ error: 'Recurring invoice not found' }, { status: 404 });
+  }
+
+  const nextInvoiceNumber = await getNextInvoiceNumber();
+
+  const newInvoice = {
+    customer_id: recurringInvoice.customer_id,
+    invoice_number: nextInvoiceNumber,
+    invoice_date: new Date().toISOString().split('T')[0],
+    due_date: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0], // Assuming due in 30 days
+    total_amount: recurringInvoice.total_amount,
+    status: 'draft',
+    recurring_invoice_id: recurringInvoice.id,
+    // Copy other relevant fields from recurringInvoice
+  };
+
+  const { data: createdInvoice, error: createError } = await supabase
+    .from('invoices')
+    .insert(newInvoice)
+    .select()
+    .single();
+
+  if (createError) {
+    console.error('Error creating invoice:', createError);
+    return NextResponse.json({ error: 'Failed to create invoice' }, { status: 500 });
+  }
+
+  // Update next generation date
+  const nextGenerationDate = new Date(recurringInvoice.next_generation_date);
+  if (recurringInvoice.frequency === 'monthly') {
+    nextGenerationDate.setMonth(nextGenerationDate.getMonth() + 1);
+  } else if (recurringInvoice.frequency === 'weekly') {
+    nextGenerationDate.setDate(nextGenerationDate.getDate() + 7);
+  } else if (recurringInvoice.frequency === 'yearly') {
+    nextGenerationDate.setFullYear(nextGenerationDate.getFullYear() + 1);
+  }
+
+  const { error: updateError } = await supabase
     .from('recurring_invoices')
-    .select('*')
-    .eq('status', 'active')
-    .lte('next_generation_date', new Date().toISOString());
+    .update({ next_generation_date: nextGenerationDate.toISOString().split('T')[0] })
+    .eq('id', recurringInvoice.id);
 
-  if (error) {
-    return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
+  if (updateError) {
+    console.error('Error updating recurring invoice:', updateError);
+    // Handle this error, maybe the invoice was created but the recurring one wasn't updated
   }
 
-  for (const recurring of recurringInvoices) {
-    // 1. Generate the new invoice from the template
-    const { error: insertError } = await supabase.from('invoices').insert([{
-      user_id: recurring.user_id,
-      organization_id: recurring.organization_id,
-      customer_id: recurring.customer_id,
-      ...recurring.invoice_template,
-      status: 'draft',
-    }]);
-
-    if (insertError) {
-      console.error('Failed to generate invoice:', insertError);
-      continue; // Skip to the next one
-    }
-
-    // 2. Update the next generation date
-    const nextDate = new Date(recurring.next_generation_date);
-    if (recurring.frequency === 'daily') nextDate.setDate(nextDate.getDate() + 1);
-    if (recurring.frequency === 'weekly') nextDate.setDate(nextDate.getDate() + 7);
-    if (recurring.frequency === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
-    if (recurring.frequency === 'yearly') nextDate.setFullYear(nextDate.getFullYear() + 1);
-
-    const { error: updateError } = await supabase
-      .from('recurring_invoices')
-      .update({ 
-        last_generated_date: new Date().toISOString(),
-        next_generation_date: nextDate.toISOString(),
-        status: recurring.end_date && nextDate > new Date(recurring.end_date) ? 'finished' : 'active',
-       })
-      .eq('id', recurring.id);
-
-    if (updateError) {
-      console.error('Failed to update recurring invoice:', updateError);
-    }
-  }
-
-  return new NextResponse(JSON.stringify({ message: `Generated ${recurringInvoices.length} invoices.` }), { status: 200 });
+  return NextResponse.json(createdInvoice);
 }

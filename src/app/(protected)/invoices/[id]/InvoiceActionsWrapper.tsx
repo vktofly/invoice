@@ -80,6 +80,21 @@ export default function InvoiceActionsWrapper({ invoice }: { invoice: Invoice })
     }
   };
 
+  const handleSendInvoice = async () => {
+    try {
+      const res = await fetch(`/api/invoices/${invoice.id}/send`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to send invoice.');
+      }
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   const currencySymbol = getCurrencySymbol(invoice.currency);
   const canPay = invoice.status === 'sent' || invoice.status === 'overdue';
 
@@ -97,7 +112,7 @@ export default function InvoiceActionsWrapper({ invoice }: { invoice: Invoice })
             className="btn-primary bg-green-500 hover:bg-green-600 flex items-center gap-2"
           >
             <CreditCardIcon className="h-5 w-5" />
-            {isPaying ? 'Processing...' : `Pay ${currencySymbol}${invoice.total_amount.toFixed(2)}`}
+            {isPaying ? 'Processing...' : `Pay ${currencySymbol}${(invoice.total_amount || 0).toFixed(2)}`}
           </button>
         )}
 
@@ -116,7 +131,7 @@ export default function InvoiceActionsWrapper({ invoice }: { invoice: Invoice })
           <ShareIcon className="h-4 w-4" />
           Share
         </button>
-        <button className="btn-primary">
+        <button onClick={handleSendInvoice} className="btn-primary">
           <PaperAirplaneIcon className="h-4 w-4" />
           Send Invoice
         </button>

@@ -7,6 +7,7 @@ import RoleProtected from '@/components/RoleProtected';
 
 import InvoicePageSkeleton from '@/components/skeletons/InvoicePageSkeleton';
 import { InvoicePDFDownloader } from '@/components/invoice/InvoicePDFDownloader';
+import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface Invoice {
   id: string;
@@ -68,6 +69,21 @@ export default function InvoicesPage() {
       inv.customers?.email?.toLowerCase().includes(search.toLowerCase())
     );
   });
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this invoice?')) {
+      try {
+        const res = await fetch(`/api/invoices/${id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to delete invoice.');
+        }
+        setInvoices(invoices.filter(inv => inv.id !== id));
+      } catch (err: any) {
+        setError(err.message);
+      }
+    }
+  };
 
   return (
     <RoleProtected allowedRoles={["user", "vendor", "customer"]}>
@@ -152,12 +168,20 @@ export default function InvoicesPage() {
                               View
                             </button>
                             {user?.user_metadata?.role !== 'customer' && (
-                              <button
-                                className="text-blue-500 hover:underline dark:text-blue-400"
-                                onClick={() => router.push(`/invoices/${inv.id}/edit`)}
-                              >
-                                Edit
-                              </button>
+                              <>
+                                <button
+                                  className="text-blue-500 hover:underline dark:text-blue-400"
+                                  onClick={() => router.push(`/invoices/${inv.id}/edit`)}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(inv.id)}
+                                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500"
+                                >
+                                  <TrashIcon className="h-5 w-5" />
+                                </button>
+                              </>
                             )}
                             <InvoicePDFDownloader invoiceId={inv.id} />
                           </div>

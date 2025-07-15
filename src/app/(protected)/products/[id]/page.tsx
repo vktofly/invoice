@@ -42,7 +42,7 @@ export default function ProductDetailPage() {
         <p><strong>Description:</strong> {product.description}</p>
         <p><strong>SKU:</strong> {product.sku}</p>
         <p><strong>Quantity:</strong> {product.quantity}</p>
-        <p><strong>Price:</strong> ${product.price.toFixed(2)}</p>
+        <p><strong>Price:</strong> ${(product.price || 0).toFixed(2)}</p>
       </div>
       <div className="mt-6 flex gap-4">
         <button onClick={() => router.push(`/products/${id}/edit`)} className="btn-secondary">Edit</button>

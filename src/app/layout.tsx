@@ -5,6 +5,8 @@ import { Metadata } from 'next';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { OrganizationProvider } from '@/contexts/OrganizationContext';
 
+
+
 export const metadata: Metadata = {
   title: 'Invoice App',
   description: 'Generate and manage professional invoices',

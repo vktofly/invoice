@@ -24,7 +24,7 @@ const CustomersPage = () => {
       try {
         const res = await fetch("/api/customers");
         const data = await res.json();
-        setCustomers(data.customers || []);
+        setCustomers(data?.customers || []);
       } catch {
         setCustomers([]);
       } finally {

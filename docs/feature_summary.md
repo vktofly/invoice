@@ -43,19 +43,19 @@ This section lists potential new features to enhance the application, categorize
   - **Description:** Integrate a payment gateway to allow clients to pay their invoices directly online with a credit card. This involves adding a "Pay Now" button to the public invoice view, creating payment intents, and handling webhooks to update the invoice status automatically.
 - **Expense Tracking:**
   - **Description:** Introduce a new module for users to log, categorize, and manage their business expenses. This would allow for better financial tracking and profitability analysis.
-
-### Medium Priority
 - **Estimates & Quotes:**
   - **Description:** Create a system for sending estimates or quotes to clients, which can then be approved and converted into an invoice with a single click.
-- **Advanced Reporting:**
-  - **Description:** Enhance the existing reporting section with more detailed analytics, such as profit/loss statements, sales tax summaries, and client-specific revenue reports.
 - **Enhanced Notification System:**
   - **Description:** Build a dedicated notification center page and expand the types of notifications (e.g., "Invoice Viewed by Client," "Payment Failed," "Template Created").
+- **Advanced Reporting:**
+  - **Description:** Enhance the existing reporting section with more detailed analytics, such as profit/loss statements, sales tax summaries, and client-specific revenue reports.
 
-### Low Priority / Long-Term
+### Medium Priority
 - **Multi-Language Support:**
   - **Description:** Internationalize the application to support multiple languages for both the UI and the generated invoices.
 - **Dashboard Customization:**
   - **Description:** Allow users to rearrange or hide widgets on their dashboard for a more personalized experience.
+
+### Low Priority / Long-Term
 - **Real-time Collaboration:**
   - **Description:** A complex feature that would allow multiple team members to edit an invoice simultaneously.

@@ -7,6 +7,7 @@ type InvoiceActionsProps = {
   onSaveAndSend: (e: React.FormEvent) => void;
   onSaveAsTemplate: (e: React.FormEvent) => void;
   onDownload: (e: React.FormEvent) => void;
+  isRecurring: boolean;
 };
 
 const InvoiceActions: React.FC<InvoiceActionsProps> = ({
@@ -15,6 +16,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({
   onSaveAndSend,
   onSaveAsTemplate,
   onDownload,
+  isRecurring,
 }) => (
   <div className="sticky bottom-0 left-0 right-0 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700/50 shadow-lg z-10">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,7 +52,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({
             onClick={onSaveAndSend}
             className="btn-primary"
             >
-            {activeAction === 'sent' ? 'Sending…' : 'Save & Send'}
+            {activeAction === 'sent' ? (isRecurring ? 'Saving...' : 'Sending...') : (isRecurring ? 'Save Recurring Invoice' : 'Save & Send')}
             </button>
         </div>
     </div>

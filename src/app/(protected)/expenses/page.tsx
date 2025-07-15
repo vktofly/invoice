@@ -164,7 +164,7 @@ export default function ExpensesPage() {
                     <td className="px-4 py-3 text-gray-800 dark:text-gray-100">{new Date(exp.expense_date).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-gray-800 dark:text-gray-100">{exp.description}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{exp.category || '-'}</td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-800 dark:text-gray-100">₹{exp.amount.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-medium text-gray-800 dark:text-gray-100">₹{(exp.amount || 0).toFixed(2)}</td>
                     <td className="px-4 py-3 text-center">
                       <button onClick={() => handleDelete(exp.id)} className="text-red-500 hover:underline dark:text-red-400">
                         Delete

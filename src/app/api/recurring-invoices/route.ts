@@ -1,6 +1,7 @@
-import supabase from '@/lib/supabase/server';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import { RecurringInvoiceSchema } from '@/lib/schemas';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseAdmin = createClient(
@@ -8,20 +9,8 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const RecurringInvoiceSchema = z.object({
-  customer_id: z.string(),
-  recurring_frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'yearly']),
-  recurring_start_date: z.string(),
-  recurring_end_date: z.string().optional().nullable(),
-  items: z.array(z.any()), // Keep items flexible for the template
-  // Add other relevant fields from the invoice form that should be part of the template
-  notes: z.string().optional(),
-  currency: z.string().optional(),
-  // etc.
-});
-
-
 export async function POST(req: Request) {
+  const supabase = createRouteHandlerClient({ cookies });
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response('Unauthorized', { status: 401 });
 
