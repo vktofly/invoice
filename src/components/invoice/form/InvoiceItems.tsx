@@ -1,6 +1,6 @@
 // src/components/invoice/form/InvoiceItems.tsx
 import React from 'react';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface InvoiceItemsProps {
   formState: any;
@@ -40,7 +40,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
         <span className="text-sm">{formState.items.length} item(s)</span>
       </div>
       <div className="overflow-x-auto">
-          <div className="hidden lg:grid grid-cols-12 gap-2 mb-2 items-center px-1 text-sm font-semibold text-gray-800 min-w-[700px]">
+          <div className="hidden lg:grid grid-cols-12 gap-2 mb-2 items-center px-1 text-sm font-semibold text-gray-600 dark:text-gray-400 min-w-[700px]">
               <div className="col-span-1">#</div>
               <div className="col-span-3">Description</div>
               <div className="col-span-1">Qty</div>
@@ -50,7 +50,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
               <div className="col-span-1">Amount</div>
               <div className="col-span-1"></div>
           </div>
-          <div className="lg:hidden grid grid-cols-12 gap-2 mb-2 items-center px-1 text-sm font-semibold text-gray-800 min-w-[600px]">
+          <div className="lg:hidden grid grid-cols-12 gap-2 mb-2 items-center px-1 text-sm font-semibold text-gray-600 dark:text-gray-400 min-w-[600px]">
               <div className="col-span-4">Description</div>
               <div className="col-span-2">Qty</div>
               <div className="col-span-3">Rate</div>
@@ -86,8 +86,8 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                           </select>
                           <input type="number" placeholder="Discount" value={item.discount_amount || 0} onChange={e => handleItemChange(index, 'discount_amount', parseFloat(e.target.value) || 0)} className="input" />
                       </div>
-                      <div className="col-span-1 input bg-gray-100 flex items-center justify-end">{currencySymbol}{itemTotal.toFixed(2)}</div>
-                      <button onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 justify-self-center">X</button>
+                      <div className="col-span-1 input bg-gray-100/50 dark:bg-gray-800/50 flex items-center justify-end text-gray-800 dark:text-gray-200">{currencySymbol}{itemTotal.toFixed(2)}</div>
+                      <button onClick={() => removeItem(index)} className="btn-danger btn-sm p-2 justify-self-center"><TrashIcon className="h-4 w-4" /></button>
                   </div>
               );
           })}
@@ -95,19 +95,19 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
       <button onClick={addItem} className="btn-secondary mt-2"><PlusIcon className="h-4 w-4 mr-1" /> Add Item</button>
       <div className="mt-6 flex justify-end">
           <div className="w-full max-w-md space-y-2">
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                   <span>Subtotal:</span>
                   <span>{currencySymbol}{subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                   <span>Total Item Discount:</span>
                   <span>-{currencySymbol}{totalItemDiscount.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                   <span>Total Tax:</span>
                   <span>{currencySymbol}{totalTax.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center text-sm text-gray-600">
+              <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
                 <span>Shipping:</span>
                 <input
                   type="number"
@@ -117,7 +117,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                   className="input w-24 text-right text-sm"
                 />
               </div>
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                 <span>Overall Discount:</span>
                 <div className="flex items-center gap-2">
                   <select
@@ -142,11 +142,11 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                   <span>Invoice Total:</span>
                   <span>{currencySymbol}{total.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                   <span>Previous Balance:</span>
                   <span>{currencySymbol}{outstandingBalance.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t border-white/20" style={{ color: formState.color_theme }}>
+              <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t border-white/20 text-indigo-600 dark:text-indigo-400">
                   <span>Balance Due:</span>
                   <span>{currencySymbol}{balanceDue.toFixed(2)}</span>
               </div>

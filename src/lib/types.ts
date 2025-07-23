@@ -1,4 +1,24 @@
 // D:\Invoice_app\src\lib\types.ts
+import { User } from '@supabase/supabase-js';
+
+export type { User };
+
+export type Organization = {
+  id: string;
+  name: string;
+  industry: string;
+  country: string;
+  state: string;
+  address?: string;
+  currency: string;
+  language: string;
+  timezone: string;
+  gst_registered: boolean;
+  gst_number?: string;
+  created_by: string;
+  created_at: string;
+  role: string;
+};
 
 export type Customer = {
   id: string;
@@ -11,7 +31,6 @@ export type Customer = {
   first_name?: string;
   last_name?: string;
   company_name?: string;
-  display_name?: string;
   currency?: string;
   work_phone?: string;
   mobile?: string;
@@ -33,6 +52,7 @@ export type Customer = {
   shipping_pin?: string;
   shipping_phone?: string;
   shipping_fax?: string;
+  outstanding_balance?: number;
 };
 
 export type CustomerAddress = {
@@ -55,6 +75,7 @@ export type CustomerAddress = {
 export type Invoice = {
   id: string;
   owner: string;
+  organization_id: string;
   customer_id: string;
   billing_address_id?: string;
   shipping_address_id?: string;
@@ -146,3 +167,10 @@ export type EstimateItem = {
   tax_rate?: number;
   line_total: number;
 };
+
+export type TopProduct = {
+  product_id: string;
+  name: string;
+  total_sold: number;
+};
+

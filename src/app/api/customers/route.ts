@@ -34,10 +34,6 @@ export async function POST(req: NextRequest) {
     shipping_fax,
   } = await req.json();
   
-  if (!display_name || !email) {
-    return NextResponse.json({ error: 'Display name and email are required' }, { status: 400 });
-  }
-
   // Get the authenticated user
   const supabase = createRouteHandlerClient({ cookies });
   const { data: { user }, error: userError } = await supabase.auth.getUser();

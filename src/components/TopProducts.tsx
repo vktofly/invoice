@@ -1,40 +1,53 @@
-"use client";
-import React, { useState, useEffect } from 'react';
-import { listTopProducts } from '@/lib/supabase/products';
+'use client';
 import { CubeIcon } from '@heroicons/react/24/outline';
+import { useEffect, useState } from 'react';
+import { TopProductsSkeleton } from './skeletons/TopProductsSkeleton';
 
-export const TopProducts = () => {
-  const [products, setProducts] = useState([]);
+type TopProduct = {
+  product_id: string;
+  name: string;
+  total_sold: number;
+};
+
+async function fetchData(): Promise<TopProduct[]> {
+  // Simulate a network request
+  await new Promise(resolve => setTimeout(resolve, 3000));
+  return [
+    { product_id: '1', name: 'Web Design Package', total_sold: 50 },
+    { product_id: '2', name: 'SEO Consulting', total_sold: 35 },
+    { product_id: '3', name: 'Logo Design', total_sold: 20 },
+  ];
+}
+
+export default function TopProducts() {
+  const [products, setProducts] = useState<TopProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      const data = await listTopProducts();
+    fetchData().then(data => {
       setProducts(data);
       setLoading(false);
-    };
-    fetchProducts();
+    });
   }, []);
 
+  if (loading) {
+    return <TopProductsSkeleton />;
+  }
+
   return (
-    <div className="bg-white/40 backdrop-blur-lg rounded-xl border border-white/20 shadow-lg p-6 dark:bg-gray-800/40 dark:border-gray-700">
-      <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
-        <CubeIcon className="h-6 w-6 inline-block mr-2" />
-        Top Products
-      </h3>
-      {loading ? (
-        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
-      ) : (
-        <ul className="divide-y divide-white/20 dark:divide-gray-700">
-          {products.map((product) => (
-            <li key={product.product_id} className="py-3 flex justify-between items-center">
-              <span className="font-medium text-gray-800 dark:text-gray-100">{product.name}</span>
-              <span className="text-gray-600 dark:text-gray-300">{product.total_sold} units</span>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="rounded-lg border bg-card text-card-foreground p-6 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-foreground">Top Products</h3>
+        <CubeIcon className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <ul className="divide-y divide-border">
+        {products.map(product => (
+          <li key={product.product_id} className="py-3 flex justify-between items-center">
+            <span className="font-medium text-foreground">{product.name}</span>
+            <span className="text-muted-foreground">{product.total_sold} units</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
-};
-
+}

@@ -1,37 +1,21 @@
 
-'use client';
+import { getServerSupabase } from '@/lib/supabase/server-utils';
+import Link from 'next/link';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+async function getProduct(supabase: any, id: string) {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) return null;
+  return data;
+}
 
-export default function ProductDetailPage() {
-  const { id } = useParams();
-  const router = useRouter();
-  const [product, setProduct] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+export default async function ProductDetailPage({ params }: { params: { id: string } }) {
+  const supabase = await getServerSupabase();
+  const product = await getProduct(supabase, params.id);
 
-  useEffect(() => {
-    if (!id) return;
-    const fetchProduct = async () => {
-      const res = await fetch(`/api/products/${id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setProduct(data);
-      } else {
-        router.push('/products');
-      }
-      setLoading(false);
-    };
-    fetchProduct();
-  }, [id, router]);
-
-  const handleDelete = async () => {
-    if (!id) return;
-    await fetch(`/api/products/${id}`, { method: 'DELETE' });
-    router.push('/products');
-  };
-
-  if (loading) return <p>Loading...</p>;
   if (!product) return <p>Not found</p>;
 
   return (
@@ -45,8 +29,8 @@ export default function ProductDetailPage() {
         <p><strong>Price:</strong> ${(product.price || 0).toFixed(2)}</p>
       </div>
       <div className="mt-6 flex gap-4">
-        <button onClick={() => router.push(`/products/${id}/edit`)} className="btn-secondary">Edit</button>
-        <button onClick={handleDelete} className="btn-danger">Delete</button>
+        <Link href={`/products/${params.id}/edit`} className="btn-secondary">Edit</Link>
+        {/* For delete, use a client subcomponent if needed */}
       </div>
     </div>
   );

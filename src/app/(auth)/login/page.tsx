@@ -3,35 +3,16 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { login } from './actions';
-import { supabase } from '@/lib/supabase/client';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple, FaFacebook } from 'react-icons/fa';
+import React from 'react';
+import { SocialButton } from '@/components/SocialButton';
 
 export default function LoginPage({
   searchParams,
 }: {
   searchParams: { error?: string; message?: string };
 }) {
-
-  const handleOAuthSignIn = async (provider: 'google' | 'apple' | 'facebook') => {
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    });
-  };
-
-  const SocialButton = ({ provider, icon, label }) => (
-    <button
-      type="button"
-      onClick={() => handleOAuthSignIn(provider)}
-      className="flex items-center justify-center w-full py-3 px-4 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-300"
-    >
-      {icon}
-      <span className="ml-3 font-medium">{label}</span>
-    </button>
-  );
 
   return (
     <div className="min-h-screen flex bg-slate-50">
@@ -123,9 +104,9 @@ export default function LoginPage({
           </div>
 
           <div className="space-y-4">
-            <SocialButton provider="google" icon={<FcGoogle size={22} />} label="Sign in with Google" />
-            <SocialButton provider="facebook" icon={<FaFacebook size={22} className="text-blue-800" />} label="Sign in with Facebook" />
-            <SocialButton provider="apple" icon={<FaApple size={22} />} label="Sign in with Apple" />
+            <SocialButton provider="google" />
+            <SocialButton provider="facebook" />
+            <SocialButton provider="apple" />
           </div>
         </div>
       </div>

@@ -1,35 +1,36 @@
-import { supabase } from './client';
+import { createClient } from './client';
 import { Estimate } from '../types';
 
-export const getEstimates = async (): Promise<Estimate[]> => {
+export async function getEstimates() {
+  const supabase = await createClient();
   const { data, error } = await supabase.from('estimates').select('*, customers(name)');
-  if (error) throw new Error(error.message);
-  return data as Estimate[];
-};
+  return { data, error };
+}
 
-export const getEstimate = async (id: string): Promise<Estimate | null> => {
+export async function getEstimateById(id: string) {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('estimates')
-    .select('*, customers(name), estimate_items(*)')
+    .select('*, customers(name)')
     .eq('id', id)
     .single();
-  if (error) throw new Error(error.message);
-  return data as Estimate;
-};
+  return { data, error };
+}
 
-export const createEstimate = async (estimate: Partial<Estimate>): Promise<Estimate> => {
+export async function insertEstimate(estimate: any) {
+  const supabase = await createClient();
   const { data, error } = await supabase.from('estimates').insert(estimate).single();
-  if (error) throw new Error(error.message);
-  return data as Estimate;
-};
+  return { data, error };
+}
 
-export const updateEstimate = async (id: string, estimate: Partial<Estimate>): Promise<Estimate> => {
+export async function updateEstimate(id: string, estimate: any) {
+  const supabase = await createClient();
   const { data, error } = await supabase.from('estimates').update(estimate).eq('id', id).single();
-  if (error) throw new Error(error.message);
-  return data as Estimate;
-};
+  return { data, error };
+}
 
-export const deleteEstimate = async (id: string): Promise<void> => {
+export async function deleteEstimate(id: string) {
+  const supabase = await createClient();
   const { error } = await supabase.from('estimates').delete().eq('id', id);
-  if (error) throw new Error(error.message);
-};
+  return { error };
+}

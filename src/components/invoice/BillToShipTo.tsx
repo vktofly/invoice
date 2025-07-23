@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 
 // Define types for the component props and state
@@ -240,4 +241,4 @@ const BillToShipTo: React.FC<BillToShipToProps> = ({ customers, customerId, form
   );
 };
 
-export default BillToShipTo; 
+export default BillToShipTo;

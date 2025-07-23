@@ -12,6 +12,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import Skeleton from '../Skeleton';
 
 ChartJS.register(
   CategoryScale,
@@ -22,19 +23,22 @@ ChartJS.register(
   Legend
 );
 
+const SalesReportSkeleton = () => (
+  <div className="p-6 bg-card rounded-lg border shadow-sm">
+    <Skeleton className="h-7 w-1/3 mb-4" />
+    <div className="w-full h-64">
+      <Skeleton className="w-full h-full" />
+    </div>
+  </div>
+);
+
 export default function SalesReport() {
   const [salesData, setSalesData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch sales data from your API
-    const fetchSalesData = async () => {
-      // const res = await fetch('/api/reports/sales');
-      // const data = await res.json();
-      // setSalesData(data);
-      setLoading(false);
-    };
-    fetchSalesData();
+    const timer = setTimeout(() => setLoading(false), 1500); // Simulate loading
+    return () => clearTimeout(timer);
   }, []);
 
   const data = {
@@ -48,11 +52,11 @@ export default function SalesReport() {
     ],
   };
 
-  if (loading) return <p>Loading sales report...</p>;
+  if (loading) return <SalesReportSkeleton />;
 
   return (
-    <div className="p-6 bg-white/40 backdrop-blur-lg rounded-xl border border-white/20 shadow-lg dark:bg-gray-800/40 dark:border-gray-700">
-      <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Sales Report</h2>
+    <div className="p-6 bg-card rounded-lg border shadow-sm">
+      <h2 className="text-lg font-semibold mb-4 text-card-foreground">Sales Report</h2>
       <Bar data={data} />
     </div>
   );

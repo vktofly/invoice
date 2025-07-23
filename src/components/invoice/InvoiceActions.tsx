@@ -8,6 +8,7 @@ type InvoiceActionsProps = {
   onSaveAsTemplate: (e: React.FormEvent) => void;
   onDownload: (e: React.FormEvent) => void;
   isRecurring: boolean;
+  disabled?: boolean;
 };
 
 const InvoiceActions: React.FC<InvoiceActionsProps> = ({
@@ -17,13 +18,14 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({
   onSaveAsTemplate,
   onDownload,
   isRecurring,
+  disabled = false,
 }) => (
-  <div className="sticky bottom-0 left-0 right-0 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700/50 shadow-lg z-10">
+  <div className="sticky bottom-0 left-0 right-0 w-full bg-white/40 dark:bg-gray-900/40 backdrop-blur-lg border-t border-white/20 dark:border-gray-700/50 shadow-lg z-10">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-end items-center gap-4 py-4">
             <button
               type="button"
-              disabled={!!activeAction}
+              disabled={disabled || !!activeAction}
               onClick={onDownload}
               className="btn-secondary flex items-center"
             >
@@ -32,7 +34,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({
             </button>
             <button
             type="button"
-            disabled={!!activeAction}
+            disabled={disabled || !!activeAction}
             onClick={onSaveAsTemplate}
             className="btn-secondary"
             >
@@ -40,7 +42,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({
             </button>
             <button
             type="submit"
-            disabled={!!activeAction}
+            disabled={disabled || !!activeAction}
             className="btn-secondary"
             onClick={onSaveDraft}
             >
@@ -48,7 +50,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({
             </button>
             <button
             type="button"
-            disabled={!!activeAction}
+            disabled={disabled || !!activeAction}
             onClick={onSaveAndSend}
             className="btn-primary"
             >

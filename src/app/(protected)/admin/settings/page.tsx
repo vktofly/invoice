@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 interface Settings {
   default_tax: number;
@@ -18,6 +18,7 @@ export default function AdminSettingsPage() {
     currency: 'USD',
     bank_details: '',
   });
+  const supabase = createClient();
 
   useEffect(() => {
     async function load() {
@@ -30,7 +31,7 @@ export default function AdminSettingsPage() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [supabase]);
 
   const save = async () => {
     setSaving(true);
@@ -92,4 +93,5 @@ export default function AdminSettingsPage() {
       </div>
     </div>
   );
-} 
+}
+ 

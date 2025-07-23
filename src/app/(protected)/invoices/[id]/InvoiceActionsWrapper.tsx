@@ -9,20 +9,19 @@ import {
   ShareIcon,
   PaperAirplaneIcon,
 } from '@heroicons/react/24/outline';
-import InvoicePDFLink from './InvoicePDFLink'; // Assuming this is in the same directory
+import InvoicePDFLink from './InvoicePDFLink';
+import { Customer } from '@/lib/types';
 
-// Define the Invoice type again for props
 interface Invoice {
   id: string;
   number: string;
   status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
   total_amount: number;
   currency: string;
-  customer: { name: string; email: string };
-  [key: string]: any; // Allow other properties
+  customer?: { name: string; email?: string };
+  [key: string]: any;
 }
 
-// Helper to get currency symbol
 const getCurrencySymbol = (currency: string) => {
   const symbols: { [key: string]: string } = {
     USD: '$',
@@ -33,7 +32,7 @@ const getCurrencySymbol = (currency: string) => {
   return symbols[currency] || '$';
 };
 
-export default function InvoiceActionsWrapper({ invoice }: { invoice: Invoice }) {
+export default function InvoiceActionsWrapper({ invoice, customer }: { invoice: Invoice, customer: Customer }) {
   const router = useRouter();
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,8 +62,8 @@ export default function InvoiceActionsWrapper({ invoice }: { invoice: Invoice })
           router.refresh();
         },
         prefill: {
-          name: invoice.customer.name,
-          email: invoice.customer.email,
+          name: invoice.customer?.name || '',
+          email: invoice.customer?.email || '',
         },
         theme: {
           color: '#3b82f6',
@@ -104,7 +103,6 @@ export default function InvoiceActionsWrapper({ invoice }: { invoice: Invoice })
       <div className="flex items-center gap-2">
         {error && <p className="text-red-500 text-sm mr-4">{error}</p>}
         
-        {/* Payment Button */}
         {canPay && (
           <button
             onClick={handlePayment}
@@ -116,10 +114,8 @@ export default function InvoiceActionsWrapper({ invoice }: { invoice: Invoice })
           </button>
         )}
 
-        {/* PDF Download */}
-        <InvoicePDFLink invoice={invoice} />
+        <InvoicePDFLink invoice={invoice} customer={customer} />
 
-        {/* Other Actions */}
         <button
           onClick={() => router.push(`/invoices/${invoice.id}/edit`)}
           className="btn-secondary"

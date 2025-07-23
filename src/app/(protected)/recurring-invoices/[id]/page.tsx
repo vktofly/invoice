@@ -1,42 +1,23 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { getServerSupabase } from '@/lib/supabase/server-utils';
 import InvoiceForm from '@/components/invoice/InvoiceForm';
 import GenerationHistory from '@/components/recurring-invoices/GenerationHistory';
 import RecurringInvoiceActions from '@/components/recurring-invoices/RecurringInvoiceActions';
 import { getInvoiceGenerationHistory } from '@/lib/supabase/recurring_invoices';
-import { Invoice } from '@/lib/types';
 
-export default function RecurringInvoiceDetailPage({ params }: { params: { id: string } }) {
-  const [recurringInvoice, setRecurringInvoice] = useState<any | null>(null);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
+async function getRecurringInvoice(supabase: any, id: string) {
+  const { data, error } = await supabase
+    .from('recurring_invoices')
+    .select('*, customers(name)')
+    .eq('id', id)
+    .single();
+  if (error) return null;
+  return data;
+}
 
-  useEffect(() => {
-    const fetchRecurringInvoice = async () => {
-      const { data, error } = await supabase
-        .from('recurring_invoices')
-        .select('*, customers(name)')
-        .eq('id', params.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching recurring invoice:', error);
-      } else {
-        setRecurringInvoice(data);
-        const history = await getInvoiceGenerationHistory(params.id);
-        setInvoices(history);
-      }
-      setLoading(false);
-    };
-
-    fetchRecurringInvoice();
-  }, [params.id]);
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
+export default async function RecurringInvoiceDetailPage({ params }: { params: { id: string } }) {
+  const supabase = await getServerSupabase();
+  const recurringInvoice = await getRecurringInvoice(supabase, params.id);
+  const invoices = recurringInvoice ? await getInvoiceGenerationHistory(params.id) : [];
 
   if (!recurringInvoice) {
     return <p>Recurring invoice not found.</p>;

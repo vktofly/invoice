@@ -1,62 +1,43 @@
+'use client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DollarSign } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { TotalReceivablesSkeleton } from './skeletons/TotalReceivablesSkeleton';
 
-/**
- * TotalReceivables component
- * Displays the total receivables, progress bar, and breakdown by days.
- * Replace placeholder data with real data from Supabase.
- */
+async function fetchData() {
+  // Simulate a network request
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  return {
+    totalReceivables: 34567.89,
+    overdueAmount: 12345.67,
+  };
+}
+
 export default function TotalReceivables() {
-  // Placeholder data; replace with real fetch
-  const [data, setData] = useState({
-    total: 0,
-    current: 0,
-    overdue_1_15: 0,
-    overdue_16_30: 0,
-    overdue_31_45: 0,
-    overdue_45_plus: 0,
-  });
-  // useEffect(() => { /* Fetch data here */ }, []);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData().then(data => {
+      setData(data);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return <TotalReceivablesSkeleton />;
+  }
 
   return (
-    <section className="rounded-xl border bg-white p-6 shadow-md">
-      <div className="flex justify-between mb-4">
-        <h2 className="text-lg font-semibold">Total Receivables</h2>
-        <button className="text-indigo-600 text-sm font-medium flex items-center gap-1">
-          <span className="text-xl leading-none">+</span> New
-        </button>
-      </div>
-      <div className="mb-2 text-2xl font-bold">₹{data.total.toFixed(2)}</div>
-      {/* Progress bar (static for now) */}
-      <div className="w-full h-2 bg-gray-100 rounded mb-4">
-        <div className="h-2 bg-indigo-400 rounded" style={{ width: '10%' }} />
-      </div>
-      {/* Breakdown by days */}
-      <div className="flex flex-wrap gap-6 text-sm">
-        <div>
-          <span className="text-blue-600 font-medium">CURRENT</span>
-          <div className="font-semibold">₹{data.current.toFixed(2)}</div>
-        </div>
-        <div>
-          <span className="text-red-500 font-medium">OVERDUE</span>
-          <div className="font-semibold">₹{data.overdue_1_15.toFixed(2)}</div>
-          <div className="text-xs text-gray-400">1-15 Days</div>
-        </div>
-        <div>
-          <span className="text-red-400 font-medium"> </span>
-          <div className="font-semibold">₹{data.overdue_16_30.toFixed(2)}</div>
-          <div className="text-xs text-gray-400">16-30 Days</div>
-        </div>
-        <div>
-          <span className="text-red-300 font-medium"> </span>
-          <div className="font-semibold">₹{data.overdue_31_45.toFixed(2)}</div>
-          <div className="text-xs text-gray-400">31-45 Days</div>
-        </div>
-        <div>
-          <span className="text-red-200 font-medium"> </span>
-          <div className="font-semibold">₹{data.overdue_45_plus.toFixed(2)}</div>
-          <div className="text-xs text-gray-400">Above 45 days</div>
-        </div>
-      </div>
-    </section>
+    <Card className="transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Total Receivables</CardTitle>
+        <DollarSign className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">${data.totalReceivables.toLocaleString()}</div>
+        <p className="text-xs text-muted-foreground">${data.overdueAmount.toLocaleString()} overdue</p>
+      </CardContent>
+    </Card>
   );
-} 
+}

@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { User } from '@supabase/supabase-js';
+import { signOut } from '@/app/(auth)/login/actions';
 import { 
   BellIcon, 
   PlusIcon, 
@@ -18,8 +19,13 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
-export default function Navbar({ onMenuButtonClick }: { onMenuButtonClick: () => void }) {
-  const { user, loading, signOut } = useAuth();
+interface NavbarProps {
+  user: User;
+  onMenuButtonClick: () => void;
+  isCollapsed: boolean;
+}
+
+export default function Navbar({ user, onMenuButtonClick, isCollapsed }: NavbarProps) {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showCreateDropdown, setShowCreateDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -72,14 +78,13 @@ export default function Navbar({ onMenuButtonClick }: { onMenuButtonClick: () =>
 
   async function handleLogout() {
     await signOut();
-    router.replace('/login');
   }
 
   const getUserDisplayName = () => user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
   const getUserRole = () => user?.user_metadata?.role || 'customer';
 
   return (
-    <header className="fixed top-0 right-0 z-30 flex h-16 w-full items-center justify-between border-b border-white/20 bg-white/40 px-6 backdrop-blur-lg transition-all duration-300 lg:w-[calc(100%-16rem)] dark:bg-gray-800/40 dark:border-gray-700">
+    <header className={`fixed top-0 right-0 z-30 flex h-16 w-full items-center justify-between border-b border-white/20 bg-white/40 px-6 backdrop-blur-lg transition-all duration-300 dark:bg-gray-800/40 dark:border-gray-700 ${isCollapsed ? 'lg:w-[calc(100%-5rem)]' : 'lg:w-[calc(100%-16rem)]'}`}>
       <div className="flex items-center gap-4">
         <button onClick={onMenuButtonClick} className="lg:hidden">
           <Bars3Icon className="h-6 w-6 text-gray-600 dark:text-gray-300" />
@@ -150,44 +155,40 @@ export default function Navbar({ onMenuButtonClick }: { onMenuButtonClick: () =>
           )}
         </div>
 
-        {loading ? (
-          <div className="h-9 w-9 rounded-full bg-gray-200 animate-pulse" />
-        ) : user ? (
-          <div className="relative" ref={userDropdownRef}>
-            <button onClick={() => setShowUserDropdown(!showUserDropdown)} className="flex items-center gap-2">
-              <UserCircleIcon className="h-9 w-9 text-gray-500 dark:text-gray-400" />
-              <div className="hidden sm:block text-left">
-                <div className="text-sm font-medium text-gray-800 dark:text-gray-100">{getUserDisplayName()}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">{getUserRole()}</div>
-              </div>
-              <ChevronDownIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-            </button>
-            {showUserDropdown && (
-              <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-md shadow-lg bg-white/80 backdrop-blur-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800/80 dark:ring-white/10">
-                <div className="py-1">
-                  <div className="px-4 py-3 border-b border-white/20 dark:border-gray-700">
-                    <p className="text-sm font-medium truncate">{getUserDisplayName()}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
-                  </div>
-                  <Link href="/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-white/50 dark:text-gray-300 dark:hover:bg-gray-700/50">
-                    <UserIcon className="h-4 w-4 mr-3" /> Profile
-                  </Link>
-                  <Link href="/settings" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-white/50 dark:text-gray-300 dark:hover:bg-gray-700/50">
-                    <Cog6ToothIcon className="h-4 w-4 mr-3" /> Settings
-                  </Link>
-                  <div className="py-1 border-t border-white/20 dark:border-gray-700">
-                    <button onClick={handleLogout} className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50">
+        <div className="relative" ref={userDropdownRef}>
+          <button onClick={() => setShowUserDropdown(!showUserDropdown)} className="flex items-center gap-2">
+            <UserCircleIcon className="h-9 w-9 text-gray-500 dark:text-gray-400" />
+            <div className="hidden sm:block text-left">
+              <div className="text-sm font-medium text-gray-800 dark:text-gray-100">{getUserDisplayName()}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">{getUserRole()}</div>
+            </div>
+            <ChevronDownIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+          </button>
+          {showUserDropdown && (
+            <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-md shadow-lg bg-white/80 backdrop-blur-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800/80 dark:ring-white/10">
+              <div className="py-1">
+                <div className="px-4 py-3 border-b border-white/20 dark:border-gray-700">
+                  <p className="text-sm font-medium truncate">{getUserDisplayName()}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                </div>
+                <Link href="/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-white/50 dark:text-gray-300 dark:hover:bg-gray-700/50">
+                  <UserIcon className="h-4 w-4 mr-3" /> Profile
+                </Link>
+                <Link href="/settings" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-white/50 dark:text-gray-300 dark:hover:bg-gray-700/50">
+                  <Cog6ToothIcon className="h-4 w-4 mr-3" /> Settings
+                </Link>
+                <div className="py-1 border-t border-white/20 dark:border-gray-700">
+                  <form action={handleLogout}>
+                    <button type="submit" className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50">
                       <ArrowRightOnRectangleIcon className="h-4 w-4 mr-3" /> Sign Out
                     </button>
-                  </div>
+                  </form>
                 </div>
               </div>
-            )}
-          </div>
-        ) : (
-          <Link href="/login" className="btn-primary bg-blue-500 hover:bg-blue-600">Sign In</Link>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
-} 
+}

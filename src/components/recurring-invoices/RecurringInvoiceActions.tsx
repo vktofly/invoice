@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function RecurringInvoiceActions({ recurringInvoice }: { recurringInvoice: any }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+
+  const supabase = createClient();
 
   const updateStatus = async (status: 'active' | 'paused' | 'finished') => {
     setLoading(true);

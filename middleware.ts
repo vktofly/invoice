@@ -1,34 +1,53 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
-  const { pathname } = req.nextUrl;
-
-  if (session) {
-    if (pathname === '/' || pathname === '/login' || pathname === '/register') {
-      return NextResponse.redirect(new URL('/home', req.url));
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name, value, options) {
+          response.cookies.set({ name, value, ...options });
+        },
+        remove(name, options) {
+          response.cookies.delete({ name, ...options });
+        },
+      },
     }
-    return res;
+  );
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const { pathname } = request.nextUrl;
+
+  // Redirect logged-in users from auth pages to home
+  if (session) {
+    if (pathname === '/' || pathname === '/login' || pathname === '/register' || pathname === '/update-password' || pathname === '/reset-password' || pathname === '/choose-role') {
+      return NextResponse.redirect(new URL('/home', request.url));
+    }
   }
 
-  // Unauthenticated users
-  const publicPaths = ['/', '/login', '/register', '/reset-password', '/update-password'];
-  if (publicPaths.includes(pathname) || pathname.startsWith('/_next/') || pathname.startsWith('/api/') || pathname.startsWith('/static/')) {
-      return res;
+  // Protect routes
+  const protectedPaths = ['/home', '/invoices', '/customers', '/products', '/expenses', '/recurring-invoices', '/time-tracking', '/estimates', '/settings', '/profile', '/admin', '/organization-setup', '/organizations', '/search', '/notifications'];
+  
+  if (!session && protectedPaths.some(p => pathname.startsWith(p))) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = '/login';
+    redirectUrl.searchParams.set('redirectedFrom', pathname);
+    return NextResponse.redirect(redirectUrl);
   }
 
-  // If trying to access a protected route, redirect to login
-  const redirectUrl = req.nextUrl.clone();
-  redirectUrl.pathname = '/login';
-  redirectUrl.searchParams.set('redirectedFrom', pathname);
-  return NextResponse.redirect(redirectUrl);
+  return response;
 }
 
 export const config = {
@@ -42,4 +61,4 @@ export const config = {
      */
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
-}; 
+};

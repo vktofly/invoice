@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { getRecurringInvoiceById } from '@/lib/supabase/recurring_invoices';
 import { getNextInvoiceNumber } from '@/lib/supabase/invoices';
@@ -11,14 +11,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Recurring invoice ID is required' }, { status: 400 });
   }
 
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {}
+        },
+      },
+    }
+  );
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
-  const recurringInvoice = await getRecurringInvoiceById(recurring_invoice_id);
+  const { data: recurringInvoice, error: recurringInvoiceError } = await getRecurringInvoiceById(recurring_invoice_id);
+
+  if (recurringInvoiceError) {
+    return NextResponse.json({ error: recurringInvoiceError.message }, { status: 500 });
+  }
 
   if (!recurringInvoice) {
     return NextResponse.json({ error: 'Recurring invoice not found' }, { status: 404 });

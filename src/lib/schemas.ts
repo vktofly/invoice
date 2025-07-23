@@ -22,6 +22,7 @@ export const InvoiceTemplateSchema = z.object({
 });
 
 export const RecurringInvoiceSchema = z.object({
+  organization_id: z.string(),
   customer_id: z.string(),
   recurring_frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'yearly']),
   recurring_start_date: z.string(),
@@ -86,4 +87,38 @@ export const InvoiceSchema = z.object({
   recurring_frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'yearly']).optional(),
   recurring_start_date: z.string().optional(),
   recurring_end_date: z.string().optional().nullable(),
+});
+
+export const CustomerSchema = z.object({
+  customer_type: z.string(),
+  salutation: z.string().optional(),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+  company_name: z.string().optional(),
+  currency: z.string(),
+  email: z.string().email(),
+  work_phone: z.string().optional(),
+  mobile: z.string().optional(),
+  billing_attention: z.string().optional(),
+  billing_country: z.string().optional(),
+  billing_address1: z.string().optional(),
+  billing_address2: z.string().optional(),
+  billing_city: z.string().optional(),
+  billing_state: z.string().optional(),
+  billing_pin: z.string().optional(),
+  billing_phone: z.string().optional(),
+  billing_fax: z.string().optional(),
+  shipping_attention: z.string().optional(),
+  shipping_country: z.string().optional(),
+  shipping_address1: z.string().optional(),
+  shipping_address2: z.string().optional(),
+  shipping_city: z.string().optional(),
+  shipping_state: z.string().optional(),
+  shipping_pin: z.string().optional(),
+  shipping_phone: z.string().optional(),
+  shipping_fax: z.string().optional(),
+  gstin: z.string().optional(),
+  pan: z.string().optional(),
+  payment_terms: z.string().optional(),
+  website: z.string().optional(),
 });

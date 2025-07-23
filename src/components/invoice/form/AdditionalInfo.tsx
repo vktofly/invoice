@@ -1,6 +1,6 @@
 // src/components/invoice/form/AdditionalInfo.tsx
 import React from 'react';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface AdditionalInfoProps {
   formState: any;
@@ -32,7 +32,7 @@ const AdditionalInfo: React.FC<AdditionalInfoProps> = ({
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
         <div>
-          <h3 className="text-base font-semibold mb-4 text-gray-800">Custom Fields</h3>
+          <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-200">Custom Fields</h3>
           <div className="space-y-4">
             {(formState.custom_fields || []).map((field: any, index: number) => (
               <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
@@ -53,9 +53,9 @@ const AdditionalInfo: React.FC<AdditionalInfoProps> = ({
                 <button
                   type="button"
                   onClick={() => removeCustomField(index)}
-                  className="text-red-500 hover:text-red-700 justify-self-start md:justify-self-center"
+                  className="btn-danger btn-sm p-2 flex items-center gap-1 justify-self-start md:justify-self-center"
                 >
-                  Remove
+                  <TrashIcon className="h-4 w-4" />
                 </button>
               </div>
             ))}
@@ -69,22 +69,22 @@ const AdditionalInfo: React.FC<AdditionalInfoProps> = ({
           </button>
         </div>
         <div>
-          <h3 className="text-base font-semibold mb-4 text-gray-800">Attachments</h3>
+          <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-200">Attachments</h3>
           <div className="flex items-center">
             <input
               type="file"
               multiple
               onChange={handleFileChange}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white/50 file:text-indigo-500 hover:file:bg-white/60"
+              className="input-file"
             />
           </div>
           {attachments.length > 0 && (
             <div className="mt-4">
               <ul className="divide-y divide-gray-200/50">
                 {attachments.map((file, index) => (
-                  <li key={index} className="py-2 flex justify-between items-center">
-                    <span className="text-sm text-gray-800">{file.name}</span>
-                    <button onClick={() => removeAttachment(index)} className="text-red-500 hover:text-red-700">Remove</button>
+                  <li key={index} className="py-2 flex justify-between items-center text-gray-600 dark:text-gray-400">
+                    <span className="text-sm truncate pr-2">{file.name}</span>
+                    <button onClick={() => removeAttachment(index)} className="btn-danger btn-sm p-1"><TrashIcon className="h-4 w-4" /></button>
                   </li>
                 ))}
               </ul>
@@ -92,7 +92,7 @@ const AdditionalInfo: React.FC<AdditionalInfoProps> = ({
           )}
         </div>
         <div className="lg:col-span-2">
-          <h3 className="text-base font-semibold mb-4 text-gray-800">Recurring Invoice</h3>
+          <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-200">Recurring Invoice</h3>
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -102,14 +102,14 @@ const AdditionalInfo: React.FC<AdditionalInfoProps> = ({
               onChange={e => setFormState(prev => ({ ...prev, is_recurring: e.target.checked }))}
               className="h-4 w-4 text-indigo-500 focus:ring-indigo-400 border-gray-300 rounded"
             />
-            <label htmlFor="is_recurring" className="ml-2 block text-sm text-gray-800">
+            <label htmlFor="is_recurring" className="ml-2 block text-sm text-gray-800 dark:text-gray-200">
               This is a recurring invoice
             </label>
           </div>
           {formState.is_recurring && (
             <div className="mt-4 space-y-4">
               <div>
-                <label htmlFor="recurring_frequency" className="block text-sm font-medium text-gray-600 mb-1">Frequency</label>
+                <label htmlFor="recurring_frequency" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Frequency</label>
                 <select
                   id="recurring_frequency"
                   name="recurring_frequency"
@@ -152,14 +152,14 @@ const AdditionalInfo: React.FC<AdditionalInfoProps> = ({
           )}
         </div>
         <div className="lg:col-span-2">
-          <h3 className="text-base font-semibold mb-4 text-gray-800">Notes & Customization</h3>
+          <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-200">Notes & Customization</h3>
           <textarea name="notes" value={formState.notes} onChange={handleInputChange} className="input w-full" rows={3}></textarea>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <input type="text" name="logo_url" placeholder="Logo URL" value={formState.logo_url} onChange={handleInputChange} className="input" />
             <input type="color" name="color_theme" value={formState.color_theme} onChange={handleInputChange} className="input h-10" />
           </div>
           <div className="mt-4">
-            <label htmlFor="authorized_signature" className="block text-sm font-medium text-gray-600 mb-1">Authorized Signature</label>
+            <label htmlFor="authorized_signature" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Authorized Signature</label>
             <input type="text" id="authorized_signature" name="authorized_signature" value={formState.authorized_signature} onChange={handleInputChange} className="input w-full" placeholder="Enter name for signature" />
           </div>
         </div>

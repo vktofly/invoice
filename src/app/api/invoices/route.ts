@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 
 import { Invoice, InvoiceItem } from '@/lib/types';
 
@@ -9,9 +9,23 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get('status');
   const customerId = searchParams.get('customer');
 
-  const supabase = createRouteHandlerClient({
-    cookies: () => cookies(),
-  });
+  const cookieStore = cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {}
+        },
+      },
+    }
+  );
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
@@ -20,10 +34,10 @@ export async function GET(request: NextRequest) {
   // Fetch invoices with all related data in a single query
   let invoiceQuery = supabase.from('invoices').select(`
     *,
-    customer:customers (*),
-    billing_address:customer_addresses!invoices_billing_address_id_fkey (*),
-    shipping_address:customer_addresses!invoices_shipping_address_id_fkey (*),
-    invoice_items (*)
+    customer:customers(*),
+    billing_address:customer_addresses!invoices_billing_address_id_fkey(*),
+    shipping_address:customer_addresses!invoices_shipping_address_id_fkey(*),
+    invoice_items(*)
   `);
 
   if (status) {
@@ -40,7 +54,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch invoices: " + invoiceError.message }, { status: 500 });
   }
 
-  return NextResponse.json(invoices || []);
+  const processedInvoices = invoices?.map(invoice => {
+    if (typeof invoice.custom_fields === 'string') {
+      try {
+        invoice.custom_fields = JSON.parse(invoice.custom_fields);
+      } catch (e) {
+        console.error('Failed to parse custom_fields:', e);
+        invoice.custom_fields = [];
+      }
+    }
+    return invoice;
+  });
+
+  return NextResponse.json(processedInvoices || []);
 }
 
 export async function POST(request: NextRequest) {
@@ -61,8 +87,23 @@ export async function POST(request: NextRequest) {
     ...restOfInvoiceData
   } = invoiceData;
 
-  // Use the authenticated client so we know who the user is
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {}
+        },
+      },
+    }
+  );
 
   const {
     data: { user },
@@ -121,6 +162,18 @@ export async function POST(request: NextRequest) {
     calculated_total -= discount_amount || 0;
   }
 
+  let processed_custom_fields = custom_fields;
+  if (typeof processed_custom_fields === 'string') {
+    try {
+      processed_custom_fields = JSON.parse(processed_custom_fields);
+    } catch (e) {
+      console.error('Failed to parse custom_fields on create:', e);
+      processed_custom_fields = [];
+    }
+  } else if (!Array.isArray(processed_custom_fields)) {
+    processed_custom_fields = [];
+  }
+
   const insertPayload = { 
     ...restOfInvoiceData, 
     number, 
@@ -137,7 +190,8 @@ export async function POST(request: NextRequest) {
     shipping_method,
     tracking_number,
     shipping_cost,
-    custom_fields,
+    custom_fields: processed_custom_fields,
+    updated_at: new Date().toISOString(),
   };
 
   const { data: invoiceRows, error } = await supabase

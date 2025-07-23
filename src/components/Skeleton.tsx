@@ -7,7 +7,7 @@ import React from 'react';
 const Skeleton = ({ className }: { className?: string }) => {
   return (
     <div
-      className={`animate-pulse rounded-md bg-gray-200 ${className}`}
+      className={`animate-pulse rounded-md bg-muted ${className}`}
       data-testid="skeleton"
     />
   );

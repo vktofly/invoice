@@ -12,8 +12,12 @@ export default function RecurringInvoicesSummaryWidget() {
 
   useEffect(() => {
     const fetchSummary = async () => {
-      const data = await getRecurringInvoicesSummary();
-      setSummary(data);
+      const { data, error } = await getRecurringInvoicesSummary();
+      console.log('RecurringInvoicesSummary data:', data);
+      console.error('RecurringInvoicesSummary error:', error);
+      if (data) {
+        setSummary(data);
+      }
       setLoading(false);
     };
 

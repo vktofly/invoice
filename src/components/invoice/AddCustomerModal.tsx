@@ -73,22 +73,7 @@ export default function AddCustomerModal({ onAddCustomer, onClose }: AddCustomer
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Auto-update display name based on other fields
-  React.useEffect(() => {
-    let newDisplayName = "";
-    if (formData.customer_type === 'Business') {
-      newDisplayName = formData.company_name;
-    } else {
-      newDisplayName = `${formData.first_name} ${formData.last_name}`.trim();
-    }
-    // If the auto-generated name is empty, use the email as a fallback
-    if (!newDisplayName && formData.email) {
-      newDisplayName = formData.email;
-    }
-    if (newDisplayName !== formData.display_name) {
-      setFormData(prev => ({ ...prev, display_name: newDisplayName }));
-    }
-  }, [formData.customer_type, formData.first_name, formData.last_name, formData.company_name, formData.email, formData.display_name]);
+  
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -122,10 +107,11 @@ export default function AddCustomerModal({ onAddCustomer, onClose }: AddCustomer
     }
 
     try {
+      const { display_name, ...payload } = formData;
       const res = await fetch("/api/customers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {

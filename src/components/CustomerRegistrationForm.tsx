@@ -80,17 +80,7 @@ const CustomerRegistrationForm: React.FC<Props> = ({ customer }) => {
     website: customer?.website || "",
   });
 
-  useEffect(() => {
-    let newDisplayName = "";
-    if (formData.customer_type === 'Business') {
-      newDisplayName = formData.company_name;
-    } else {
-      newDisplayName = `${formData.first_name} ${formData.last_name}`.trim();
-    }
-    if (newDisplayName !== formData.display_name) {
-      setFormData(prev => ({ ...prev, display_name: newDisplayName }));
-    }
-  }, [formData.customer_type, formData.first_name, formData.last_name, formData.company_name, formData.display_name]);
+  
 
   const [sameAsBilling, setSameAsBilling] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -150,7 +140,7 @@ const CustomerRegistrationForm: React.FC<Props> = ({ customer }) => {
       const url = isEditing ? `/api/customers/${customer.id}` : "/api/customers";
       const method = isEditing ? "PATCH" : "POST";
 
-      const payload = { ...formData };
+      const { display_name, ...payload } = { ...formData };
       // Convert empty strings to null for potentially numeric fields
       for (const key in payload) {
         if (payload[key] === '') {

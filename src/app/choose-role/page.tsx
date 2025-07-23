@@ -44,7 +44,7 @@ export default function ChooseRolePage() {
         return;
       }
       if (role === 'vendor') {
-        router.push('/home');
+        router.push('/organization-setup');
       } else {
         router.push('/customer');
       }

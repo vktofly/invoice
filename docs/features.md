@@ -49,13 +49,33 @@ This section lists potential new features to enhance the application, categorize
   - **Description:** Build a dedicated notification center page and expand the types of notifications (e.g., "Invoice Viewed by Client," "Payment Failed," "Template Created").
 - **Advanced Reporting:**
   - **Description:** Enhance the existing reporting section with more detailed analytics, such as profit/loss statements, sales tax summaries, and client-specific revenue reports.
+- **Smart Data Entry 2.0:**
+  - **Description:** AI-assisted line-item autocomplete that learns frequent products/services, plus mobile OCR “Scan Receipt” parsing totals into invoice lines in real time.
+- **Global Command Palette (Ctrl/⌘ K):**
+  - **Description:** Spotlight-style overlay for quick access to any action, record, or setting. Supports fuzzy search and keyboard-first navigation to accelerate power-user workflows.
+- **Assisted Invoice Creation Flow:**
+  - **Description:** Stepper-based wizard with autosave, inline client quick-add, real-time totals, and validation. Converts estimates directly into invoices at final step.
 
 ### Medium Priority
 - **Multi-Language Support:**
   - **Description:** Internationalize the application to support multiple languages for both the UI and the generated invoices.
 - **Dashboard Customization:**
   - **Description:** Allow users to rearrange or hide widgets on their dashboard for a more personalized experience.
+- **Timeline & Audit Trail:**
+  - **Description:** Immutable, filterable log of each status change, comment, and payment on an invoice, exportable as PDF for compliance.
+- **Data-Table Power Features:**
+  - **Description:** Density toggle, column picker, sticky bulk-action bar with aggregated totals, and virtualized scrolling for large datasets.
+- **Contextual Empty States:**
+  - **Description:** Friendly illustrations and “Create” CTAs when no data is present, plus sample-data toggle for first-time users.
+- **Toast & Undo Pattern:**
+  - **Description:** Non-blocking toast notifications with single-click undo for destructive actions.
+- **Advanced Accessibility & Theming:**
+  - **Description:** High-contrast and dyslexia-friendly themes, enhanced focus outlines, and real-time WCAG contrast checks.
+- **Performance Optimizations:**
+  - **Description:** Service-worker offline cache, route prefetch on hover, and virtualized lists to keep first input delay under 100 ms.
+- **Mobile-First Enhancements:**
+  - **Description:** Collapsible header on scroll, bottom-sheet quick actions, and edge-to-edge layout maintaining 60 FPS.
 
 ### Low Priority / Long-Term
 - **Real-time Collaboration:**
-  - **Description:** A complex feature that would allow multiple team members to edit an invoice simultaneously.
+  - **Description:** Multi-user presence (avatars & cursors), threaded line-item comments, live conflict resolution indicators, and optimistic locking for seamless concurrent editing.

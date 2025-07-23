@@ -1,12 +1,8 @@
-import { supabase } from './client';
+import { createClient } from './client';
 import type { TopCustomer } from '../types';
 
-export async function listTopCustomers(): Promise<TopCustomer[]> {
+export async function getTopCustomers() {
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc('get_top_customers');
-
-  if (error) {
-    console.error('Error fetching top customers:', error);
-    return [];
-  }
-  return data;
+  return { data, error };
 }

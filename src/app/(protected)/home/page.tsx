@@ -1,12 +1,7 @@
-"use client";
-
-import RoleProtected from '@/components/RoleProtected';
+// This is a temporary, simplified component for debugging.
 import DashboardPage from './DashboardPage';
 
 export default function HomePage() {
-  return (
-    <RoleProtected allowedRoles={["user", "vendor"]}>
-      <DashboardPage />
-    </RoleProtected>
-  );
+  // Bypassing all server-side Supabase logic for now
+  return <DashboardPage />;
 }

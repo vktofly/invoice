@@ -1,34 +1,56 @@
-"use client";
-import { ReactNode, useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
-import Sidebar from '@/components/Sidebar';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { ReactNode } from 'react';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { User } from '@supabase/supabase-js';
+import ProtectedPageWrapper from '@/components/ProtectedPageWrapper';
 
-const Navbar = dynamic(() => import('@/components/Navbar'), { ssr: false });
+export default async function ProtectedLayout({ children }: { children: ReactNode }) {
+  const cookieStore = cookies();
 
-export default function ProtectedLayout({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  const [isCollapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    if (!loading && user && !user.user_metadata?.role) {
-      router.replace('/choose-role');
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: any) {
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch (error) {
+            // The `set` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+        remove(name: string, options: any) {
+          try {
+            cookieStore.delete({ name, ...options });
+          } catch (error) {
+            // The `delete` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
     }
-  }, [user, loading, router]);
+  );
 
-  if (loading) return null;
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return redirect('/login');
+  }
+
+  if (!user.user_metadata.role) {
+    return redirect('/choose-role');
+  }
 
   return (
-    <div className="min-h-screen">
-      <Sidebar isCollapsed={isCollapsed} toggleCollapse={() => setCollapsed(!isCollapsed)} />
-      <div className={`flex flex-col transition-all duration-300 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
-        <Navbar onMenuButtonClick={() => setCollapsed(!isCollapsed)} />
-        <main className="flex-grow p-6 pt-20">
-          {children}
-        </main>
-      </div>
-    </div>
+    <ProtectedPageWrapper user={user}>
+      {children}
+    </ProtectedPageWrapper>
   );
-} 
+}

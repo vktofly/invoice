@@ -1,16 +1,53 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { RecurringInvoiceSchema } from '@/lib/schemas';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createClient(
+const supabaseAdmin = await createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+export async function GET(request) {
+  const cookieStore = cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {}
+        },
+      },
+    }
+  );
+  // ...rest of your handler logic
+}
+
 export async function POST(req: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {}
+        },
+      },
+    }
+  );
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response('Unauthorized', { status: 401 });
 
@@ -23,31 +60,19 @@ export async function POST(req: Request) {
 
   const { 
     customer_id, 
+    organization_id,
     recurring_frequency, 
     recurring_start_date, 
     recurring_end_date, 
     ...invoiceTemplate 
   } = result.data;
 
-  // Fetch the user's organizations
-  const { data: orgs, error: orgError } = await supabaseAdmin
-    .from('organizations')
-    .select('id')
-    .eq('created_by', user.id)
-    .limit(1);
-
-  if (orgError || !orgs || orgs.length === 0) {
-    return NextResponse.json({ error: 'Could not determine organization.' }, { status: 500 });
-  }
-
-  const organization_id = orgs[0].id;
-
   const { data, error } = await supabaseAdmin
     .from('recurring_invoices')
     .insert([
       {
         user_id: user.id,
-        organization_id: organization_id, // Replace with actual org ID
+        organization_id: organization_id,
         customer_id: customer_id,
         frequency: recurring_frequency,
         start_date: recurring_start_date,

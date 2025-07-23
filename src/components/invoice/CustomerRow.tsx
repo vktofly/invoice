@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import AddCustomerModal from './AddCustomerModal';
 
@@ -68,4 +69,4 @@ const CustomerRow: React.FC<CustomerRowProps> = ({
   );
 };
 
-export default CustomerRow; 
+export default CustomerRow;

@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 
 const InvoiceHeader = () => (
@@ -15,4 +16,4 @@ const InvoiceHeader = () => (
   </div>
 );
 
-export default InvoiceHeader; 
+export default InvoiceHeader;

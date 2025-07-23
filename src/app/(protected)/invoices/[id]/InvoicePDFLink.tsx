@@ -1,16 +1,18 @@
 'use client';
 
-import { PDFDownloadLink, BlobProviderParams } from '@react-pdf/renderer';
+import React from 'react';
+import { PDFDownloadLink } from '@react-pdf/renderer';
 import InvoicePDF from './InvoicePDF'; // The new, redesigned PDF component
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
-import React from 'react';
+import { Customer } from '@/lib/types';
 
 interface InvoicePDFLinkProps {
   invoice: any;
+  customer: Customer;
   className?: string;
 }
 
-export default function InvoicePDFLink({ invoice, className }: InvoicePDFLinkProps) {
+export default function InvoicePDFLink({ invoice, customer, className }: InvoicePDFLinkProps) {
   const defaultClassName = "btn-secondary flex items-center gap-2";
 
   if (!invoice || !invoice.number || !invoice.invoice_items) {
@@ -24,7 +26,7 @@ export default function InvoicePDFLink({ invoice, className }: InvoicePDFLinkPro
 
   return (
     <PDFDownloadLink
-      document={<InvoicePDF invoice={invoice} />}
+      document={<InvoicePDF invoice={invoice} customer={customer} />}
       fileName={`Invoice-${invoice.number}.pdf`}
     >
       <button className={className || defaultClassName}>
@@ -34,3 +36,4 @@ export default function InvoicePDFLink({ invoice, className }: InvoicePDFLinkPro
     </PDFDownloadLink>
   );
 }
+

@@ -1,30 +1,31 @@
-import { supabase } from './client';
+import { createClient } from './client';
 
 export async function getRecurringInvoicesSummary() {
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc('get_recurring_invoices_summary');
+  return { data, error };
+}
 
-  if (error) {
-    console.error('Error fetching recurring invoices summary:', error);
-    return null;
-  }
-  return data[0];
+export async function getRecurringInvoices() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('recurring_invoices')
+    .select('*');
+  return { data, error };
 }
 
 export async function getRecurringInvoiceById(id: string) {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('recurring_invoices')
-    .select('*, customers(*), invoice_items(*), billing_address:customer_addresses!recurring_invoices_billing_address_id_fkey(*), shipping_address:customer_addresses!recurring_invoices_shipping_address_id_fkey(*)')
+    .select('*')
     .eq('id', id)
     .single();
-
-  if (error) {
-    console.error('Error fetching recurring invoice:', error);
-    return null;
-  }
-  return data;
+  return { data, error };
 }
 
 export async function getInvoiceGenerationHistory(recurringInvoiceId: string) {
+    const supabase = await createClient();
     const { data, error } = await supabase
         .from('invoice_generation_history')
         .select('*')

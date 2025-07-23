@@ -1,6 +1,7 @@
-// src/components/invoice/form/CoreDetails.tsx
 import React from 'react';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { User } from '@supabase/supabase-js';
 
 interface CoreDetailsProps {
   formState: any;
@@ -14,6 +15,11 @@ interface CoreDetailsProps {
   handleAddressChange: (type: 'billing' | 'shipping', addressId: string) => void;
   copyBillingToShipping: () => void;
   isCustomDueDate: boolean;
+  paymentTerm: string;
+  handleTermChange: (term: string) => void;
+  router: AppRouterInstance;
+  user: User | null;
+  organization: any | null;
 }
 
 const CoreDetails: React.FC<CoreDetailsProps> = ({
@@ -28,26 +34,56 @@ const CoreDetails: React.FC<CoreDetailsProps> = ({
   handleAddressChange,
   copyBillingToShipping,
   isCustomDueDate,
+  paymentTerm,
+  handleTermChange,
+  router,
+  user,
+  organization,
 }) => {
+  const hasOrganization = organization && organization.id;
+
   return (
     <div className="p-4 bg-white/40 backdrop-blur-lg rounded-xl border border-white/20 shadow-lg space-y-4">
       <div className="flex justify-between items-center mb-2 text-white p-3 rounded-lg" style={{ backgroundColor: formState.color_theme }}>
           <h2 className="text-lg font-semibold">Core Details</h2>
+          <button
+            type="button"
+            onClick={() => router.push('/organization-setup')}
+            className="btn-secondary btn-sm flex items-center"
+          >
+            <BuildingOffice2Icon className="h-4 w-4 mr-1" />
+            {hasOrganization ? 'Manage Organization' : 'Organization Setup'}
+          </button>
       </div>
       
       <div className="pt-4">
-        <h3 className="text-base font-semibold mb-4 text-gray-800">Your Information</h3>
-        <div className="space-y-4">
-          <input type="text" name="user_company_name" placeholder="Your Company Name" value={formState.user_company_name} onChange={handleInputChange} className="input" />
-          <input type="text" name="user_address" placeholder="Your Address, City, ZIP" value={formState.user_address} onChange={handleInputChange} className="input" />
-          <input type="text" name="user_contact" placeholder="Your Email or Phone" value={formState.user_contact} onChange={handleInputChange} className="input" />
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">From</h3>
+          {!hasOrganization && (
+            <button
+              type="button"
+              onClick={() => router.push('/profile')}
+              className="btn-secondary btn-sm flex items-center"
+            >
+              <PencilIcon className="h-4 w-4 mr-1" />
+              Edit
+            </button>
+          )}
+        </div>
+        <div className="p-4 rounded-lg bg-white/20 dark:bg-gray-800/20 border border-white/30 dark:border-gray-700/50">
+          <p className="font-bold text-gray-900 dark:text-white">
+            {hasOrganization ? organization.name : (user?.user_metadata?.full_name || 'Your Name')}
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {hasOrganization ? organization.address : (user?.email || 'your@email.com')}
+          </p>
         </div>
       </div>
 
       <div className="pt-6 border-t border-white/20">
         <h3 className="text-base font-semibold mb-4 text-gray-800">Customer Information</h3>
         <div className="flex justify-between items-center mb-2">
-          <label htmlFor="customer_id" className="block text-sm font-medium text-gray-600">Bill To</label>
+          <label htmlFor="customer_id" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Bill To</label>
           <button onClick={() => setIsModalOpen(true)} className="btn-secondary btn-sm"><PlusIcon className="h-4 w-4 mr-1" /> Add New Customer</button>
         </div>
         <select 
@@ -76,7 +112,7 @@ const CoreDetails: React.FC<CoreDetailsProps> = ({
         <div className="pt-6 border-t border-white/20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="billing_address" className="block text-sm font-medium text-gray-600 mb-1">Billing Address</label>
+              <label htmlFor="billing_address" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Billing Address</label>
               <select
                 id="billing_address"
                 value={formState.billing_address_id || ''}
@@ -93,7 +129,7 @@ const CoreDetails: React.FC<CoreDetailsProps> = ({
 
             <div>
               <div className="flex justify-between items-center">
-                <label htmlFor="shipping_address" className="block text-sm font-medium text-gray-600 mb-1">Shipping Address</label>
+                <label htmlFor="shipping_address" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Shipping Address</label>
                 <button type="button" onClick={copyBillingToShipping} className="text-xs text-indigo-500 hover:underline">Copy Billing</button>
               </div>
               <select
@@ -115,11 +151,11 @@ const CoreDetails: React.FC<CoreDetailsProps> = ({
             <h3 className="text-base font-semibold mb-4 text-gray-800">Shipping Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                  <label htmlFor="shipping_method" className="block text-sm font-medium text-gray-600 mb-1">Method</label>
+                  <label htmlFor="shipping_method" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Method</label>
                   <input id="shipping_method" type="text" name="shipping_method" placeholder="e.g. Courier" value={formState.shipping_method} onChange={handleInputChange} className="input" />
               </div>
               <div>
-                  <label htmlFor="tracking_number" className="block text-sm font-medium text-gray-600 mb-1">Tracking #</label>
+                  <label htmlFor="tracking_number" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Tracking #</label>
                   <input id="tracking_number" type="text" name="tracking_number" placeholder="Tracking Number" value={formState.tracking_number} onChange={handleInputChange} className="input" />
               </div>
             </div>
@@ -129,7 +165,7 @@ const CoreDetails: React.FC<CoreDetailsProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-white/20">
           <div>
-            <label htmlFor="issue_date" className="block text-sm font-medium text-gray-600 mb-1">Issue Date</label>
+            <label htmlFor="issue_date" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Issue Date</label>
             <input 
               id="issue_date"
               type="date" 
@@ -140,17 +176,32 @@ const CoreDetails: React.FC<CoreDetailsProps> = ({
             />
           </div>
           {!formState.is_recurring && (
-            <div>
-              <label htmlFor="due_date" className="block text-sm font-medium text-gray-600 mb-1">Due Date</label>
-              <input 
-                id="due_date"
-                type="date" 
-                name="due_date" 
-                value={formState.due_date} 
-                onChange={handleInputChange} 
-                className="input w-full"
-                readOnly={!isCustomDueDate}
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="payment_term" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Terms</label>
+                <select
+                  id="payment_term"
+                  value={paymentTerm}
+                  onChange={(e) => handleTermChange(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="7">Net 7</option>
+                  <option value="30">Net 30</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="due_date" className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Due Date</label>
+                <input 
+                  id="due_date"
+                  type="date" 
+                  name="due_date" 
+                  value={formState.due_date} 
+                  onChange={handleInputChange} 
+                  className="input w-full"
+                  readOnly={!isCustomDueDate}
+                />
+              </div>
             </div>
           )}
         </div>
