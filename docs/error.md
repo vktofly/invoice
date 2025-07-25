@@ -11,8 +11,8 @@ strict-origin-when-cross-origin
 
 
 API Route: Attempting to fetch customer with ID: 10f3ed20-1975-43d0-96d2-84a72657314c
-Is SUPABASE_SERVICE_KEY loaded? false
-[API CUSTOMER GET ERROR] Error: SUPABASE_SERVICE_KEY is not set in the environment.
+Is SUPABASE_SERVICE_ROLE_KEY loaded? false
+[API CUSTOMER GET ERROR] Error: SUPABASE_SERVICE_ROLE_KEY is not set in the environment.
     at GET (webpack-internal:///(rsc)/./src/app/api/customers/[id]/route.ts:17:19)
     at D:\Invoice_app\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:57234
     at D:\Invoice_app\node_modules\next\dist\server\lib\trace\tracer.js:140:36
@@ -53,8 +53,8 @@ Is SUPABASE_SERVICE_KEY loaded? false
     at async Server.requestListener (D:\Invoice_app\node_modules\next\dist\server\lib\start-server.js:141:13)    
  GET /api/customers/10f3ed20-1975-43d0-96d2-84a72657314c 500 in 11358ms
 API Route: Attempting to fetch customer with ID: 10f3ed20-1975-43d0-96d2-84a72657314c
-Is SUPABASE_SERVICE_KEY loaded? false
-[API CUSTOMER GET ERROR] Error: SUPABASE_SERVICE_KEY is not set in the environment.
+Is SUPABASE_SERVICE_ROLE_KEY loaded? false
+[API CUSTOMER GET ERROR] Error: SUPABASE_SERVICE_ROLE_KEY is not set in the environment.
     at GET (webpack-internal:///(rsc)/./src/app/api/customers/[id]/route.ts:17:19)
     at D:\Invoice_app\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:57234
     at D:\Invoice_app\node_modules\next\dist\server\lib\trace\tracer.js:140:36
