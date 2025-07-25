@@ -25,7 +25,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({
         <div className="flex justify-end items-center gap-4 py-4">
             <button
               type="button"
-              disabled={disabled || !!activeAction}
+              disabled={!!activeAction}
               onClick={onDownload}
               className="btn-secondary flex items-center"
             >
@@ -34,7 +34,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({
             </button>
             <button
             type="button"
-            disabled={disabled || !!activeAction}
+            disabled={!!activeAction}
             onClick={onSaveAsTemplate}
             className="btn-secondary"
             >

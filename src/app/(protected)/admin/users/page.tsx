@@ -1,14 +1,39 @@
-import { createClient } from '@supabase/supabase-js';
+'use client';
+
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
 
-// Server-side: use service role key to list users
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+export default function AdminUsersPage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function AdminUsersPage() {
-  const { data, error } = await supabase.auth.admin.listUsers();
-  if (error) throw new Error(error.message);
-  if (!data) notFound();
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const response = await fetch('/api/admin/users');
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        const data = await response.json();
+        setUsers(data);
+      } catch (error: any) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUsers();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div className="p-8 space-y-6">
@@ -28,7 +53,7 @@ export default async function AdminUsersPage() {
           </tr>
         </thead>
         <tbody>
-          {data.users.map((u) => (
+          {users.map((u) => (
             <tr key={u.id} className="border-t">
               <td className="px-4 py-2">{u.email}</td>
               <td className="px-4 py-2">{u.user_metadata?.role ?? '—'}</td>
@@ -44,4 +69,4 @@ export default async function AdminUsersPage() {
       </table>
     </div>
   );
-} 
+}

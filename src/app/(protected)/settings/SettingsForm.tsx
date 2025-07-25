@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { TrashIcon } from '@heroicons/react/24/outline';
 
@@ -21,7 +21,7 @@ export default function SettingsForm({ user }) {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const router = useRouter();
-  const supabase = createClient();
+  
 
   useEffect(() => {
     if (user) {

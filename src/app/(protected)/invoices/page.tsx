@@ -1,8 +1,5 @@
 import { getUser, getUserRole, getServerSupabase } from '@/lib/supabase/server-utils';
 import Link from 'next/link';
-import { InvoicePDFDownloader } from '@/components/invoice/InvoicePDFDownloader';
-import InvoicePageSkeleton from '@/components/skeletons/InvoicePageSkeleton';
-import { TrashIcon } from '@heroicons/react/24/outline';
 import InvoiceListClient from './InvoiceListClient';
 
 interface Invoice {

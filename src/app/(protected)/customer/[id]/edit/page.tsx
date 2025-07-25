@@ -1,46 +1,28 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import { notFound } from 'next/navigation';
 import CustomerRegistrationForm from '@/components/CustomerRegistrationForm';
 
-export default function EditCustomerPage() {
-  const { id } = useParams();
-  const [customer, setCustomer] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+async function getCustomerData(id: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  useEffect(() => {
-    if (id) {
-      const fetchCustomer = async () => {
-        try {
-          const res = await fetch(`/api/customers/${id}`);
-          if (!res.ok) {
-            throw new Error('Failed to fetch customer data.');
-          }
-          const data = await res.json();
-          setCustomer(data.customer);
-        } catch (err: any) {
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchCustomer();
-    }
-  }, [id]);
-
-  if (loading) {
-    return <div className="max-w-5xl mx-auto p-8">Loading...</div>;
+  if (error || !data) {
+    console.error('Failed to fetch customer:', error);
+    notFound();
   }
-
-  if (error) {
-    return <div className="max-w-5xl mx-auto p-8 text-red-500">{error}</div>;
-  }
-
-  if (!customer) {
-    return <div className="max-w-5xl mx-auto p-8">Customer not found.</div>;
-  }
-
-  return <CustomerRegistrationForm customer={customer} />;
+  return data;
 }
+
+export default async function EditCustomerPage({ params }: { params: { id: string } }) {
+  const customer = await getCustomerData(params.id);
+
+  return (
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+      <CustomerRegistrationForm customer={customer} />
+    </div>
+  );
+} 

@@ -36,7 +36,7 @@ export default function DashboardPage() {
       <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-50">
         Dashboard
       </h1>
-      <DashboardStats />
+      <DashboardStats organization={mockOrganization} />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <ModernRevenueChart />

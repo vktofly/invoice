@@ -1,4 +1,4 @@
-import { createClient } from './client';
+import { supabase } from './client';
 
 export async function createDraftInvoice(payload) {
   // TODO: implement
@@ -17,7 +17,7 @@ export async function getInvoice(id) {
 }
 
 export async function listInvoices() {
-  const supabase = await createClient();
+  
   const { data, error } = await supabase
     .from('invoices')
     .select(`
@@ -46,7 +46,7 @@ export async function listInvoices() {
 }
 
 export async function getInvoices() {
-  const supabase = await createClient();
+  
   const { data, error } = await supabase
     .from('invoices')
     .select('*');
@@ -56,7 +56,7 @@ export async function getInvoices() {
 // ... (imports and other functions)
 
 export async function getNextInvoiceNumber() {
-  const supabase = await createClient();
+  
   const { data, error } = await supabase.rpc('get_next_invoice_number');
   return { data, error };
 }

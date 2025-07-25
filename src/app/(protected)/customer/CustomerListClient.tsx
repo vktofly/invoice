@@ -132,15 +132,16 @@ export default function CustomerListClient({ initialCustomers }: CustomerListCli
             <tbody>
               {sortedAndFilteredCustomers.map((c) => (
                 <tr key={c.id} className="border-b border-white/20 hover:bg-white/50 dark:border-gray-700 dark:hover:bg-gray-700/50">
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-800 dark:text-gray-100">{c.display_name || c.name}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <Link href={`/customer/${c.id}`} className="font-medium text-gray-800 dark:text-gray-100 hover:underline">
+                      {c.display_name || c.name}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-gray-400">{c.email}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-gray-400">{c.customer_type}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-gray-400">{c.company_name}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center space-x-4">
-                      <Link href={`/customer/${c.id}`} className="text-blue-500 hover:underline dark:text-blue-400">
-                        <EyeIcon className="h-5 w-5" />
-                      </Link>
                       <Link href={`/customer/${c.id}/edit`} className="text-yellow-500 hover:underline dark:text-yellow-400">
                         <PencilIcon className="h-5 w-5" />
                       </Link>

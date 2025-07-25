@@ -1,13 +1,13 @@
-import { createClient } from './client';
+import { supabase } from './client';
 
 export async function getRecurringInvoicesSummary() {
-  const supabase = await createClient();
+  
   const { data, error } = await supabase.rpc('get_recurring_invoices_summary');
   return { data, error };
 }
 
 export async function getRecurringInvoices() {
-  const supabase = await createClient();
+  
   const { data, error } = await supabase
     .from('recurring_invoices')
     .select('*');
@@ -15,7 +15,7 @@ export async function getRecurringInvoices() {
 }
 
 export async function getRecurringInvoiceById(id: string) {
-  const supabase = await createClient();
+  
   const { data, error } = await supabase
     .from('recurring_invoices')
     .select('*')
@@ -25,7 +25,7 @@ export async function getRecurringInvoiceById(id: string) {
 }
 
 export async function getInvoiceGenerationHistory(recurringInvoiceId: string) {
-    const supabase = await createClient();
+    
     const { data, error } = await supabase
         .from('invoice_generation_history')
         .select('*')

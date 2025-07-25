@@ -83,11 +83,9 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
           <InvoiceActionsWrapper invoice={invoice} customer={invoice.customer} />
         </div>
         <InvoiceTemplate
-          invoice={{
-            ...invoice,
-            items: invoice.invoice_items.map((item: any) => ({ ...item, tax_rate: item.tax_rate || 0 })),
-            custom_fields: customFieldsForTemplate,
-          }}
+          {...invoice}
+          items={invoice.invoice_items.map((item: any) => ({ ...item, tax_rate: item.tax_rate || 0 }))}
+          custom_fields={customFieldsForTemplate}
           customer={invoice.customer}
           organization={invoice.organization}
           subtotal={sub}

@@ -1,5 +1,6 @@
 'use client';
 
+'use client';
 import { useState, useEffect, Fragment, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
@@ -8,10 +9,10 @@ import AddCustomerModal from '@/components/invoice/AddCustomerModal';
 import AddAddressModal from '@/components/invoice/AddAddressModal';
 import InvoiceActions from '@/components/invoice/InvoiceActions';
 import FormErrors from '@/components/FormErrors';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { pdf } from '@react-pdf/renderer';
 import { saveAs } from 'file-saver';
-import InvoicePDF from '@/app/(protected)/invoices/[id]/InvoicePDF';
+import InvoicePDF from '@/components/invoice/InvoicePDF';
 
 import { Invoice } from '@/lib/types';
 import { InvoiceSchema, ItemSchema } from '@/lib/schemas';
@@ -381,7 +382,7 @@ export default function InvoiceForm({ initialInvoice, user, customers: initialCu
       if (attachments.length > 0) {
         const uploadPromises = attachments.map(async (file) => {
           const filePath = `${user!.id}/${id}/${file.name}`;
-          const supabase = createClient();
+          
           const { error: uploadError } = await supabase.storage.from('invoice-attachments').upload(filePath, file);
           if (uploadError) throw new Error(`Failed to upload ${file.name}: ${uploadError.message}`);
           return { name: file.name, path: filePath, size: file.size, type: file.type };
@@ -527,7 +528,29 @@ export default function InvoiceForm({ initialInvoice, user, customers: initialCu
   const previewPanel = (
     <div className="lg:sticky top-8 h-full">
       <InvoiceTemplate
-        invoice={{ ...formState, paymentTerm }}
+        number={formState.number}
+        issue_date={formState.issue_date}
+        due_date={formState.due_date}
+        items={formState.items}
+        notes={formState.notes}
+        logo_url={formState.logo_url}
+        color_theme={formState.color_theme}
+        user_company_name={formState.user_company_name}
+        user_address={formState.user_address}
+        user_contact={formState.user_contact}
+        currency={formState.currency}
+        authorized_signature={formState.authorized_signature}
+        billing_address={formState.billing_address}
+        shipping_address={formState.shipping_address}
+        shipping_method={formState.shipping_method}
+        tracking_number={formState.tracking_number}
+        shipping_cost={formState.shipping_cost}
+        custom_fields={formState.custom_fields}
+        is_recurring={formState.is_recurring}
+        recurring_frequency={formState.recurring_frequency}
+        recurring_start_date={formState.recurring_start_date}
+        recurring_end_date={formState.recurring_end_date}
+        paymentTerm={paymentTerm}
         customer={selectedCustomer}
         organization={organization}
         subtotal={subtotal}

@@ -1,14 +1,14 @@
-import { createClient } from './client';
+import { supabase } from './client';
 import { Estimate } from '../types';
 
 export async function getEstimates() {
-  const supabase = await createClient();
+  
   const { data, error } = await supabase.from('estimates').select('*, customers(name)');
   return { data, error };
 }
 
 export async function getEstimateById(id: string) {
-  const supabase = await createClient();
+  
   const { data, error } = await supabase
     .from('estimates')
     .select('*, customers(name)')
@@ -18,19 +18,19 @@ export async function getEstimateById(id: string) {
 }
 
 export async function insertEstimate(estimate: any) {
-  const supabase = await createClient();
+  
   const { data, error } = await supabase.from('estimates').insert(estimate).single();
   return { data, error };
 }
 
 export async function updateEstimate(id: string, estimate: any) {
-  const supabase = await createClient();
+  
   const { data, error } = await supabase.from('estimates').update(estimate).eq('id', id).single();
   return { data, error };
 }
 
 export async function deleteEstimate(id: string) {
-  const supabase = await createClient();
+  
   const { error } = await supabase.from('estimates').delete().eq('id', id);
   return { error };
 }

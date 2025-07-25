@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { DashboardStatsSkeleton } from './skeletons/DashboardStatsSkeleton';
 
-async function fetchData() {
+async function fetchData(organization: any) {
   // Simulate a network request
   await new Promise(resolve => setTimeout(resolve, 2000));
   return {
@@ -13,16 +13,18 @@ async function fetchData() {
   };
 }
 
-export default function DashboardStats() {
+export default function DashboardStats({ organization }: { organization: any }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData().then(data => {
-      setData(data);
-      setLoading(false);
-    });
-  }, []);
+    if (organization) {
+      fetchData(organization).then(data => {
+        setData(data);
+        setLoading(false);
+      });
+    }
+  }, [organization]);
 
   if (loading) {
     return <DashboardStatsSkeleton />;

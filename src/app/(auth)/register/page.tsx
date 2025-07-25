@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { signUp } from '../login/actions';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple, FaFacebook } from 'react-icons/fa';
 import React from 'react';
@@ -14,7 +14,7 @@ export default function RegisterPage({
   searchParams: { error?: string; message?: string };
 }) {
 
-  const supabase = createClient();
+  
 
   const handleOAuthSignIn = async (provider: 'google' | 'apple' | 'facebook') => {
     await supabase.auth.signInWithOAuth({

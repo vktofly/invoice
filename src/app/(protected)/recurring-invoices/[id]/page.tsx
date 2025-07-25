@@ -14,10 +14,21 @@ async function getRecurringInvoice(supabase: any, id: string) {
   return data;
 }
 
-export default async function RecurringInvoiceDetailPage({ params }: { params: { id: string } }) {
+async function getData(id: string) {
   const supabase = await getServerSupabase();
-  const recurringInvoice = await getRecurringInvoice(supabase, params.id);
-  const invoices = recurringInvoice ? await getInvoiceGenerationHistory(params.id) : [];
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: customers } = await supabase.from('customers').select('*');
+  const { data: organization } = await supabase.from('organizations').select('*').single();
+  const recurringInvoice = await getRecurringInvoice(supabase, id);
+  const invoices = recurringInvoice ? await getInvoiceGenerationHistory(id) : [];
+
+  return { user, customers, organization, recurringInvoice, invoices };
+}
+
+export default async function RecurringInvoiceDetailPage({ params }: { params: { id: string } }) {
+  const { user, customers, organization, recurringInvoice, invoices } = await getData(params.id);
 
   if (!recurringInvoice) {
     return <p>Recurring invoice not found.</p>;
@@ -31,7 +42,12 @@ export default async function RecurringInvoiceDetailPage({ params }: { params: {
         </h1>
         <RecurringInvoiceActions recurringInvoice={recurringInvoice} />
       </div>
-      <InvoiceForm initialInvoice={recurringInvoice.invoice_template} />
+      <InvoiceForm
+        initialInvoice={recurringInvoice.invoice_template}
+        user={user}
+        customers={customers}
+        organization={organization}
+      />
       <div className="mt-8">
         <h2 className="text-xl font-bold mb-4">Generation History</h2>
         <GenerationHistory invoices={invoices} />

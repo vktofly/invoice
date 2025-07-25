@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { InvoicePDFDownloader } from '@/components/invoice/InvoicePDFDownloader';
 import SortableTableHeader from '@/components/shared/SortableTableHeader';
@@ -169,7 +170,15 @@ export default function InvoiceListClient({ initialInvoices, userRole }: Invoice
                   onClick={() => router.push(`/invoices/${inv.id}`)}
                 >
                   <td className="px-4 py-3 text-gray-800 dark:text-gray-100">{inv.number}</td>
-                  <td className="px-4 py-3 text-gray-800 dark:text-gray-100">{getCustomerDisplayName(inv.customer)}</td>
+                  <td className="px-4 py-3 text-gray-800 dark:text-gray-100">
+                    <Link
+                      href={`/customer/${inv.customer.id}`}
+                      className="hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {getCustomerDisplayName(inv.customer)}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : ''}</td>
                   <td className="px-4 py-3 capitalize">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${

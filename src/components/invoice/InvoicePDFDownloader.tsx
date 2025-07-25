@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { saveAs } from 'file-saver';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
-import InvoicePDF from '@/app/(protected)/invoices/[id]/InvoicePDF';
+import InvoicePDF from '@/components/invoice/InvoicePDF';
 
 interface InvoicePDFDownloaderProps {
   invoiceId: string;

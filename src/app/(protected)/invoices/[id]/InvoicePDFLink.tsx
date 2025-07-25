@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
-import InvoicePDF from './InvoicePDF'; // The new, redesigned PDF component
+import InvoicePDF from '@/components/invoice/InvoicePDF'; // The new, redesigned PDF component
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { Customer } from '@/lib/types';
 

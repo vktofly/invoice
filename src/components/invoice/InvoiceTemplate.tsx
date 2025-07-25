@@ -4,40 +4,38 @@ import { toWords } from 'number-to-words';
 import { Customer } from '@/lib/types';
 
 interface InvoiceTemplateProps {
-  invoice: {
-    number?: string;
-    issue_date: string;
-    due_date: string;
-    items: Array<{
-      description: string;
-      quantity: number;
-      unit_price: number;
-      tax_rate: number;
-      discount_type?: 'fixed' | 'percentage';
-      discount_amount?: number;
-    }>;
-    notes?: string;
-    logo_url?: string;
-    color_theme?: string;
-    user_company_name?: string;
-    user_address?: string;
-    user_contact?: string;
-    currency?: string;
-    authorized_signature?: string;
-    billing_address?: any;
-    shipping_address?: any;
-    shipping_method?: string;
-    tracking_number?: string;
-    shipping_cost?: number;
-    custom_fields?: Array<{ key: string; value: string }>;
-    is_recurring?: boolean;
-    recurring_frequency?: string;
-    recurring_start_date?: string;
-    recurring_end_date?: string | null;
-    paymentTerm?: string;
-  };
+  number?: string;
+  issue_date: string;
+  due_date: string;
+  items: Array<{
+    description?: string;
+    quantity?: number;
+    unit_price?: number;
+    tax_rate?: number;
+    discount_type?: 'fixed' | 'percentage';
+    discount_amount?: number;
+  }>;
+  notes?: string;
+  logo_url?: string;
+  color_theme?: string;
+  user_company_name?: string;
+  user_address?: string;
+  user_contact?: string;
+  currency?: string;
+  authorized_signature?: string;
+  billing_address?: any;
+  shipping_address?: any;
+  shipping_method?: string;
+  tracking_number?: string;
+  shipping_cost?: number;
+  custom_fields?: Array<{ key?: string; value?: string }>;
+  is_recurring?: boolean;
+  recurring_frequency?: string;
+  recurring_start_date?: string;
+  recurring_end_date?: string | null;
+  paymentTerm?: string;
   customer: Customer | null;
-  organization: any | null; // Add organization prop
+  organization: any | null;
   subtotal: number;
   totalItemDiscount: number;
   totalTax: number;
@@ -48,7 +46,7 @@ interface InvoiceTemplateProps {
   currencySymbol: string;
 }
 
-const calculateItemTotal = (item: InvoiceTemplateProps['invoice']['items'][0]) => {
+const calculateItemTotal = (item: InvoiceTemplateProps['items'][0]) => {
   const basePrice = item.quantity * item.unit_price;
   const discount = item.discount_amount || 0;
   const discountedPrice = basePrice - discount;
@@ -57,9 +55,27 @@ const calculateItemTotal = (item: InvoiceTemplateProps['invoice']['items'][0]) =
 };
 
 const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({
-  invoice,
+  number,
+  issue_date,
+  due_date,
+  items,
+  notes,
+  logo_url,
+  color_theme = '#4f46e5',
+  authorized_signature,
+  billing_address,
+  shipping_address,
+  shipping_method,
+  tracking_number,
+  shipping_cost = 0,
+  custom_fields = [],
+  is_recurring,
+  recurring_frequency,
+  recurring_start_date,
+  recurring_end_date,
+  paymentTerm,
   customer,
-  organization, // Destructure organization
+  organization,
   subtotal,
   totalItemDiscount,
   totalTax,
@@ -68,33 +84,14 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({
   balanceDue,
   outstandingBalance,
   currencySymbol,
+  user_company_name,
+  user_address,
+  user_contact,
 }) => {
-  const {
-    number,
-    issue_date,
-    due_date,
-    items,
-    notes,
-    logo_url,
-    color_theme = '#4f46e5',
-    authorized_signature,
-    billing_address,
-    shipping_address,
-    shipping_method,
-    tracking_number,
-    shipping_cost = 0,
-    custom_fields = [],
-    is_recurring,
-    recurring_frequency,
-    recurring_start_date,
-    recurring_end_date,
-    paymentTerm,
-  } = invoice;
-
   // Prioritize organization details, fall back to invoice details
-  const companyName = organization?.name || invoice.user_company_name || 'Your Company';
-  const companyAddress = organization?.address || invoice.user_address || '123 Your Street, Your City, 12345';
-  const companyContact = organization?.contact_email || invoice.user_contact || 'your.email@example.com';
+  const companyName = organization?.name || user_company_name || 'Your Company';
+  const companyAddress = organization?.address || user_address || '123 Your Street, Your City, 12345';
+  const companyContact = organization?.contact_email || user_contact || 'your.email@example.com';
 
   const getTermLabel = (term: string | undefined) => {
     if (!term) return '';

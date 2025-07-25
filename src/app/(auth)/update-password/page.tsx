@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { useRouter } from "next/navigation";
 
 export default function UpdatePasswordPage() {
@@ -11,7 +11,7 @@ export default function UpdatePasswordPage() {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
 
-  const supabase = createClient();
+  
 
   // Ensure we only show the form when we have a valid session (i.e. after clicking recovery link)
   useEffect(() => {
@@ -20,7 +20,7 @@ export default function UpdatePasswordPage() {
         setReady(true);
       }
     });
-  }, [supabase.auth]);
+  }, []);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

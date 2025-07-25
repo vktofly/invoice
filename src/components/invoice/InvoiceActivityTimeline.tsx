@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import {
   DocumentPlusIcon,
   PaperAirplaneIcon,
@@ -54,7 +54,7 @@ export default function InvoiceActivityTimeline({ invoiceId }: InvoiceActivityTi
 
   useEffect(() => {
     const fetchActivities = async () => {
-      const supabase = createClient();
+      
       const { data, error } = await supabase
         .from('invoice_activity')
         .select(`

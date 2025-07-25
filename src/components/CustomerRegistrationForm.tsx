@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-interface Customer {
+export interface Customer {
   id: string;
   customer_type: string;
   salutation: string;
@@ -41,9 +41,10 @@ interface Customer {
 
 interface Props {
   customer?: Customer;
+  onUpdateSuccess?: (updatedCustomer: Customer) => void;
 }
 
-const CustomerRegistrationForm: React.FC<Props> = ({ customer }) => {
+const CustomerRegistrationForm: React.FC<Props> = ({ customer, onUpdateSuccess }) => {
   const [activeTab, setActiveTab] = useState("other_details_tab");
   const [formData, setFormData] = useState({
     customer_type: customer?.customer_type || "Business",
@@ -79,6 +80,16 @@ const CustomerRegistrationForm: React.FC<Props> = ({ customer }) => {
     payment_terms: customer?.payment_terms || "Due on Receipt",
     website: customer?.website || "",
   });
+
+  
+
+  useEffect(() => {
+    if (formData.customer_type === 'Business') {
+      setFormData(prev => ({ ...prev, display_name: prev.company_name }));
+    } else {
+      setFormData(prev => ({ ...prev, display_name: `${prev.first_name} ${prev.last_name}`.trim() }));
+    }
+  }, [formData.customer_type, formData.first_name, formData.last_name, formData.company_name]);
 
   
 
@@ -299,7 +310,7 @@ const CustomerRegistrationForm: React.FC<Props> = ({ customer }) => {
           </div>
           <div>
             <label htmlFor="display_name" className="block text-sm font-medium text-gray-700">Display Name*</label>
-            <input type="text" id="display_name" name="display_name" value={formData.display_name} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required readOnly />
+            <input type="text" id="display_name" name="display_name" value={formData.display_name} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
           </div>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>

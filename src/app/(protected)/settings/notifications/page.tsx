@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 export default function NotificationSettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,7 @@ export default function NotificationSettingsPage() {
   });
   const [message, setMessage] = useState<string | null>(null);
 
-  const supabase = createClient();
+  
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -26,7 +26,7 @@ export default function NotificationSettingsPage() {
       }
       setLoading(false);
     });
-  }, [supabase.auth]);
+  }, []);
 
   const save = async () => {
     setSaving(true);
