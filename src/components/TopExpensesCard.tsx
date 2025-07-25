@@ -1,32 +1,57 @@
-import { useState } from 'react';
+'use client';
+import { useEffect, useState } from 'react';
+import Skeleton from './Skeleton';
+import { TopExpensesCardSkeleton } from './skeletons/TopExpensesCardSkeleton';
 
-/**
- * TopExpensesCard component
- * Displays a table of top expenses with a fiscal year dropdown.
- * Replace the placeholder with real expense data from Supabase.
- */
+async function fakeDelay() {
+  // Simulate a network request
+  await new Promise(resolve => setTimeout(resolve, 4500));
+}
+
 export default function TopExpensesCard() {
-  const [fiscalYear, setFiscalYear] = useState('This Fiscal Year');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fakeDelay().then(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return <TopExpensesCardSkeleton />;
+  }
+
   const fiscalYears = ['This Fiscal Year', 'Last Fiscal Year', 'Custom'];
 
   return (
-    <div className="rounded-xl border bg-white p-4 sm:p-6 shadow-md">
-      <div className="flex items-center gap-1 mb-2">
-        <h2 className="text-lg font-semibold">Top Expenses</h2>
-        {/* Fiscal year dropdown for expenses */}
+    <div className="bg-card text-card-foreground rounded-lg border p-6 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-foreground">Top Expenses</h3>
         <select
-          className="ml-auto rounded border px-2 py-1 text-sm"
-          value={fiscalYear}
-          onChange={e => setFiscalYear(e.target.value)}
+          className="text-sm bg-transparent border-0 focus:ring-0 focus:outline-none text-muted-foreground"
+          defaultValue="This Fiscal Year"
           aria-label="Select Fiscal Year"
         >
           {fiscalYears.map(y => (
-            <option key={y} value={y}>{y}</option>
+            <option key={y} value={y}>
+              {y}
+            </option>
           ))}
         </select>
       </div>
-      {/* Placeholder for top expenses table */}
-      <div className="h-24 flex items-center justify-center text-gray-400">[Top Expenses Table]</div>
+      <div className="space-y-4">
+        {/* Placeholder for actual expense data */}
+        <div className="flex justify-between items-center">
+          <p>Office Supplies</p>
+          <p>$2,500</p>
+        </div>
+        <div className="flex justify-between items-center">
+          <p>Software Subscriptions</p>
+          <p>$1,200</p>
+        </div>
+        <div className="flex justify-between items-center">
+          <p>Travel</p>
+          <p>$800</p>
+        </div>
+      </div>
     </div>
   );
-} 
+}

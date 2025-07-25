@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 
 type Props = {
@@ -50,11 +51,11 @@ const TotalSummary: React.FC<Props> = ({
       {showTotalSummary && (
         <div className="border-t pt-4 mt-2">
           <div className="flex justify-between mb-2">
-            <span className="font-semibold">Sub Total</span>
-            <span className="font-semibold">{subtotal.toFixed(2)}</span>
+            <span className="text-sm font-semibold">Sub Total</span>
+            <span className="text-sm font-semibold">{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex items-center justify-between mb-2">
-            <span>Discount</span>
+            <span className="text-sm">Discount</span>
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -72,10 +73,10 @@ const TotalSummary: React.FC<Props> = ({
                 <option value="fixed">₹</option>
               </select>
             </div>
-            <span>{currencySymbol}{discountAmount.toFixed(2)}</span>
+            <span className="text-sm">{currencySymbol}{discountAmount.toFixed(2)}</span>
           </div>
           <div className="flex items-center justify-between mb-2">
-            <span>
+            <span className="text-sm">
               <label>
                 <input
                   type="radio"
@@ -103,14 +104,14 @@ const TotalSummary: React.FC<Props> = ({
               className="w-16 border px-2 py-1 rounded-none text-right"
               placeholder="Rate"
             />
-            <span>- {currencySymbol}{tdsOrTcsAmount.toFixed(2)}</span>
+            <span className="text-sm">- {currencySymbol}{tdsOrTcsAmount.toFixed(2)}</span>
           </div>
           <hr className="my-4" />
         </div>
       )}
       <div className="flex justify-between items-center border-t pt-4 mt-2">
-        <span className="text-lg font-semibold">Total ({currencySymbol})</span>
-        <span className="text-2xl font-bold">{finalTotal.toFixed(2)}</span>
+        <span className="text-base font-semibold">Total ({currencySymbol})</span>
+        <span className="text-xl font-bold">{finalTotal.toFixed(2)}</span>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from '@/lib/supabase/client';
 import { useRouter } from "next/navigation";
 
 export default function UpdatePasswordPage() {
@@ -10,6 +10,8 @@ export default function UpdatePasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+
+  
 
   // Ensure we only show the form when we have a valid session (i.e. after clicking recovery link)
   useEffect(() => {

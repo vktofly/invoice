@@ -1,0 +1,69 @@
+1. User Experience & Interface (UI/UX) Enhancements
+
+  These are focused on making the application more polished, modern, and enjoyable to use,
+  directly aligning with your UI guidelines.
+
+   * Implement Skeleton Loaders: Replace all simple "Loading..." text with the skeleton
+     components we've seen (e.g., InvoicePageSkeleton). This provides a much smoother and
+     more professional loading experience, especially on the main dashboard.
+   * Create Engaging Empty States: For pages like Invoices, Customers, and Products, when
+     the list is empty, we can replace the basic text with a more visually appealing "empty
+     state" component that includes an icon or illustration and a clear call-to-action
+     button (e.g., "Create Your First Invoice").
+   * Dashboard Customization: Allow users to rearrange the widgets on their dashboard using
+     drag-and-drop. This gives them the power to prioritize the information that is most
+     important to them.
+   * Consistent Modal Styling: Ensure all modals (AddCustomerModal, AddPaymentModal, etc.)
+     consistently use the "Glassmorphism-Lite" effect (backdrop-blur) mentioned in the UI
+     guidelines for a cohesive look and feel.
+
+  2. Core Feature Enhancements
+
+  These suggestions build upon the existing features to make them more powerful and
+  efficient.
+
+   * Saved Filters & Views: Allow users to save their frequently used filter and sort
+     combinations on the list pages. For example, they could save a view called "Overdue
+     High-Value Invoices" and access it with a single click.
+   * Bulk Actions: On the Invoices and Customers list pages, add checkboxes to each row to
+     allow users to perform bulk actions, such as:
+       * Deleting multiple invoices at once.
+       * Marking several invoices as "Paid".
+       * Exporting selected customers to a CSV file.
+   * Advanced Invoice Templates: Create a dedicated section in "Settings" where users can
+     create, manage, and set a default invoice template. This would allow for more
+     customization than the current "Save as Template" feature.
+
+  3. New High-Impact Features
+
+  These are new capabilities that would significantly expand the application's value.
+
+   * Global Search: Implement a global search bar in the main navigation header. This would
+     allow users to instantly search across all their data—invoices, customers, and
+     products—from anywhere in the app.
+   * Notification Center: Build out the notification system (the bell icon in the header) to
+     provide real-time alerts for key events, such as:
+       * An invoice has been paid.
+       * An invoice becomes overdue.
+       * A customer has viewed their invoice online.
+   * Dedicated Profile & Settings Pages:
+       * Profile Page: A page where users can manage their personal information, password,
+         and profile picture.
+       * Settings Page: A central hub for managing application preferences, such as theme
+         (light/dark mode), date format, currency settings, and notification preferences.
+
+  4. Reporting & Analytics
+
+  Leverage the application's data to provide users with valuable insights into their
+  business.
+
+   * Interactive Reporting Dashboard: Create a dedicated "Reports" page with interactive
+     charts and data visualizations.
+   * New Report Types: Introduce new, valuable reports like:
+       * Sales by Customer/Product: See which customers and products are generating the most
+         revenue.
+       * Tax Summary: A report that simplifies tax filing by summarizing all collected
+         taxes.
+       * Profit & Loss: By integrating expenses, we can provide a simple P&L statement.
+   * Exporting Reports: Allow users to export their reports to PDF or CSV for accounting and
+     record-keeping.

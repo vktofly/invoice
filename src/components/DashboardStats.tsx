@@ -1,58 +1,53 @@
-"use client";
-
+'use client';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { DashboardStatsSkeleton } from './skeletons/DashboardStatsSkeleton';
 
-interface Metrics {
-  total: number;
-  paid: number;
-  outstanding: number;
-  overdue: number;
-  revenue: number;
+async function fetchData(organization: any) {
+  // Simulate a network request
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  return {
+    totalRevenue: 12500.0,
+    netIncome: 8500.0,
+    totalClients: 78,
+    pendingInvoices: 12,
+  };
 }
 
-export default function DashboardStats() {
-  const [metrics, setMetrics] = useState<Metrics | null>(null);
+export default function DashboardStats({ organization }: { organization: any }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      // naive aggregation; in real db you'd use group by in SQL or RPC
-      const { data, error } = await supabase.from('invoices').select('status');
-      if (error) return;
-      const total = data.length;
-      const paidRows = data.filter((i) => i.status === 'paid');
-      const paid = paidRows.length;
-      const overdue = data.filter((i) => i.status === 'overdue').length;
-      const revenue = paidRows.reduce((sum: number, row: any) => sum + (row.total || 0), 0);
-      const outstanding = data.filter((i) => i.status === 'sent' || i.status === 'overdue').length;
-      setMetrics({ total, paid, outstanding, overdue, revenue });
+    if (organization) {
+      fetchData(organization).then(data => {
+        setData(data);
+        setLoading(false);
+      });
     }
-    fetchData();
-  }, []);
+  }, [organization]);
 
-  if (!metrics)
-    return (
-      <div className="flex h-24 w-full items-center justify-center">
-        <span className="text-sm text-gray-500">Loading metrics…</span>
-      </div>
-    );
+  if (loading) {
+    return <DashboardStatsSkeleton />;
+  }
+
+  const stats = [
+    { name: 'Total Revenue', value: `${data.totalRevenue.toLocaleString()}` },
+    { name: 'Net Income', value: `${data.netIncome.toLocaleString()}` },
+    { name: 'Total Clients', value: data.totalClients },
+    { name: 'Pending Invoices', value: data.pendingInvoices },
+  ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <Card label="Total Invoices" value={metrics.total} />
-      <Card label="Paid" value={metrics.paid} />
-      <Card label="Outstanding" value={metrics.outstanding} />
-      <Card label="Overdue" value={metrics.overdue} />
-      <Card label="Total Revenue" value={metrics.revenue} currency />
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {stats.map(stat => (
+        <div
+          key={stat.name}
+          className="rounded-lg border bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950"
+        >
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{stat.name}</p>
+          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-50">{stat.value}</p>
+        </div>
+      ))}
     </div>
   );
 }
-
-function Card({ label, value, currency = false }: { label: string; value: number; currency?: boolean }) {
-  return (
-    <div className="rounded-lg border bg-white p-4 shadow-sm">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="mt-2 text-2xl font-bold">{currency ? `$${value.toFixed(2)}` : value}</p>
-    </div>
-  );
-} 

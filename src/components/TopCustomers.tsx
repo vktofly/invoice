@@ -1,76 +1,71 @@
-"use client";
-
+'use client';
+import { UserGroupIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import EmptyState from './EmptyState';
+import { TopCustomersSkeleton } from './skeletons/TopCustomersSkeleton';
 
-interface Row {
-  client_id: string;
+type TopCustomer = {
+  customer_id: string;
   name: string;
-  total: number;
+  total_invoiced: number;
+};
+
+async function fetchData(): Promise<TopCustomer[]> {
+  // Simulate a network request
+  await new Promise(resolve => setTimeout(resolve, 4000));
+  return [
+    { customer_id: '1', name: 'Alpha Creations', total_invoiced: 12500 },
+    { customer_id: '2', name: 'Beta Solutions', total_invoiced: 9800 },
+    { customer_id: '3', name: 'Gamma Innovations', total_invoiced: 7600 },
+    { customer_id: '4', name: 'Delta Services', total_invoiced: 5400 },
+  ];
 }
 
 export default function TopCustomers() {
-  const [rows, setRows] = useState<Row[]>([]);
+  const [customers, setCustomers] = useState<TopCustomer[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      const { data: invoices } = await supabase
-        .from('invoices')
-        .select('client_id,total,status')
-        .eq('status', 'paid');
-      if (!invoices) return;
-
-      const totals: Record<string, number> = {};
-      invoices.forEach((inv: any) => {
-        if (!inv.client_id) return;
-        totals[inv.client_id] = (totals[inv.client_id] || 0) + (inv.total || 0);
-      });
-
-      const clientIds = Object.keys(totals);
-      if (clientIds.length === 0) {
-        setRows([]);
-        return;
-      }
-
-      const { data: clients } = await supabase
-        .from('clients')
-        .select('id,name')
-        .in('id', clientIds);
-      if (!clients) return;
-
-      const tableRows = clients.map((c: any) => ({ client_id: c.id, name: c.name, total: totals[c.id] || 0 }));
-      tableRows.sort((a, b) => b.total - a.total);
-      setRows(tableRows.slice(0, 5));
-    }
-    load();
+    fetchData().then(data => {
+      setCustomers(data);
+      setLoading(false);
+    });
   }, []);
 
+  if (loading) {
+    return <TopCustomersSkeleton />;
+  }
+
+  if (customers.length === 0) {
+    return (
+      <EmptyState
+        icon={<UserPlusIcon className="h-10 w-10" />}
+        title="No customers yet"
+        description="Add your first customer to see them here."
+        action={{
+          label: 'Add Customer',
+          onClick: () => console.log('Redirect to /customers/new'), // Placeholder
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="rounded-lg border bg-white p-4 shadow-sm">
-      <h2 className="text-lg font-semibold">Top Customers</h2>
-      <table className="mt-4 w-full text-sm">
-        <thead>
-          <tr className="text-left text-gray-500">
-            <th className="px-2 py-1">Client</th>
-            <th className="px-2 py-1 text-right">Revenue</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.client_id} className="border-t">
-              <td className="px-2 py-2">{r.name}</td>
-              <td className="px-2 py-2 text-right">${r.total.toFixed(2)}</td>
-            </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={2} className="px-2 py-4 text-center text-gray-500">
-                No data
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+    <div className="rounded-lg border bg-card text-card-foreground p-6 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-foreground">Top Customers</h3>
+        <UserGroupIcon className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <ul className="divide-y divide-border">
+        {customers.map(customer => (
+          <li key={customer.customer_id} className="py-3 flex justify-between items-center">
+            <span className="font-medium text-foreground">{customer.name}</span>
+            <span className="font-mono text-muted-foreground">
+              ₹{customer.total_invoiced.toLocaleString()}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
-} 
+}

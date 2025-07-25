@@ -1,45 +1,76 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
-export async function middleware(req: NextRequest) {
-  // Clone the request URL so we can mutate it without mutating the original
-  const url = req.nextUrl.clone();
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
-  // Initialise Supabase client with the incoming cookie headers
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
-
-  // Retrieve active session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  // If no session, force login on protected routes
-  if (!session) {
-    if (isProtectedPath(url.pathname)) {
-      url.pathname = '/login';
-      return NextResponse.redirect(url);
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({ name, value, ...options });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({ name, value, ...options });
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({ name, value: '', ...options });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({ name, value: '', ...options });
+        },
+      },
     }
-    return res;
+  );
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const { pathname } = request.nextUrl;
+
+  // Redirect logged-in users from auth pages to home
+  if (session) {
+    if (pathname === '/' || pathname === '/login' || pathname === '/register' || pathname === '/update-password' || pathname === '/reset-password' || pathname === '/choose-role') {
+      return NextResponse.redirect(new URL('/home', request.url));
+    }
   }
 
-  // Extract role from user metadata (or default to "user")
-  const role = (session.user.user_metadata?.role as string) || 'user';
-
-  // Authorise admin-only routes
-  if (url.pathname.startsWith('/admin') && role !== 'admin') {
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+  // Protect routes
+  const protectedPaths = ['/home', '/invoices', '/customers', '/products', '/expenses', '/recurring-invoices', '/time-tracking', '/estimates', '/settings', '/profile', '/admin', '/organization-setup', '/organizations', '/search', '/notifications'];
+  
+  if (!session && protectedPaths.some(p => pathname.startsWith(p))) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = '/login';
+    redirectUrl.searchParams.set('redirectedFrom', pathname);
+    return NextResponse.redirect(redirectUrl);
   }
 
-  return res;
+  return response;
 }
 
-// Only run middleware for these paths to keep it fast
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };
-
-function isProtectedPath(pathname: string) {
-  return pathname.startsWith('/admin') || pathname.startsWith('/dashboard');
-} 

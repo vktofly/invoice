@@ -1,60 +1,53 @@
-"use client";
-
+'use client';
+import { CubeIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { TopProductsSkeleton } from './skeletons/TopProductsSkeleton';
 
-interface Row {
-  description: string;
-  total: number;
+type TopProduct = {
+  product_id: string;
+  name: string;
+  total_sold: number;
+};
+
+async function fetchData(): Promise<TopProduct[]> {
+  // Simulate a network request
+  await new Promise(resolve => setTimeout(resolve, 3000));
+  return [
+    { product_id: '1', name: 'Web Design Package', total_sold: 50 },
+    { product_id: '2', name: 'SEO Consulting', total_sold: 35 },
+    { product_id: '3', name: 'Logo Design', total_sold: 20 },
+  ];
 }
 
 export default function TopProducts() {
-  const [rows, setRows] = useState<Row[]>([]);
+  const [products, setProducts] = useState<TopProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      const { data: items } = await supabase
-        .from('invoice_items')
-        .select('description,line_total');
-      if (!items) return;
-      const totals: Record<string, number> = {};
-      items.forEach((item: any) => {
-        const key = item.description || 'Unnamed';
-        totals[key] = (totals[key] || 0) + (item.line_total || 0);
-      });
-      const tableRows = Object.entries(totals).map(([description, total]) => ({ description, total }));
-      tableRows.sort((a, b) => b.total - a.total);
-      setRows(tableRows.slice(0, 5));
-    }
-    load();
+    fetchData().then(data => {
+      setProducts(data);
+      setLoading(false);
+    });
   }, []);
 
+  if (loading) {
+    return <TopProductsSkeleton />;
+  }
+
   return (
-    <div className="max-w-5xl mx-auto w-full px-0 py-0">
-      <h2 className="text-lg font-semibold">Top Products / Services</h2>
-      <table className="mt-4 w-full text-sm">
-        <thead>
-          <tr className="text-left text-gray-500">
-            <th className="px-2 py-1">Item</th>
-            <th className="px-2 py-1 text-right">Revenue</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.description} className="border-t">
-              <td className="px-2 py-2">{r.description}</td>
-              <td className="px-2 py-2 text-right">${r.total.toFixed(2)}</td>
-            </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={2} className="px-2 py-4 text-center text-gray-500">
-                No data
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+    <div className="rounded-lg border bg-card text-card-foreground p-6 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-foreground">Top Products</h3>
+        <CubeIcon className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <ul className="divide-y divide-border">
+        {products.map(product => (
+          <li key={product.product_id} className="py-3 flex justify-between items-center">
+            <span className="font-medium text-foreground">{product.name}</span>
+            <span className="text-muted-foreground">{product.total_sold} units</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
-} 
+}

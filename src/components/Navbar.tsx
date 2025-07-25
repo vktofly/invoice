@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { User } from '@supabase/supabase-js';
+import { signOut } from '@/app/(auth)/login/actions';
 import { 
   BellIcon, 
   PlusIcon, 
@@ -12,187 +12,183 @@ import {
   ChevronDownIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-  UserIcon
+  UserIcon,
+  MagnifyingGlassIcon,
+  Bars3Icon,
+  DocumentTextIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
-interface User {
-  id: string;
-  email: string;
-  user_metadata?: {
-    full_name?: string;
-    role?: string;
-  };
+interface NavbarProps {
+  user: User;
+  onMenuButtonClick: () => void;
+  isCollapsed: boolean;
 }
 
-export default function Navbar() {
-  const { user, loading, signOut } = useAuth();
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+export default function Navbar({ user, onMenuButtonClick, isCollapsed }: NavbarProps) {
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showCreateDropdown, setShowCreateDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<any[]>([]);
+  
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+  const createDropdownRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const {
-    organizations,
-    currentOrg,
-    setCurrentOrg,
-    loading: orgLoading,
-  } = useOrganizationContext();
 
-  // Close dropdown when clicking outside
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!user) return;
+      try {
+        const response = await fetch('/api/notifications');
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      }
+    };
+
+    fetchNotifications();
+  }, [user]);
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim() !== '') {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false);
+      }
+      if (createDropdownRef.current && !createDropdownRef.current.contains(event.target as Node)) {
+        setShowCreateDropdown(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   async function handleLogout() {
-    try {
-      await signOut();
-      router.replace('/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
+    await signOut();
   }
 
-  const getUserDisplayName = () => {
-    if (!user) return '';
-    return user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
-  };
-
-  const getUserRole = () => {
-    if (!user) return '';
-    return user.user_metadata?.role || 'customer';
-  };
+  const getUserDisplayName = () => user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const getUserRole = () => user?.user_metadata?.role || 'customer';
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between border-b bg-white px-4 py-3 shadow-sm">
-      {/* Organization Switcher */}
+    <header className={`fixed top-0 right-0 z-30 flex h-16 w-full items-center justify-between border-b border-white/20 bg-white/40 px-6 backdrop-blur-lg transition-all duration-300 dark:bg-gray-800/40 dark:border-gray-700 ${isCollapsed ? 'lg:w-[calc(100%-5rem)]' : 'lg:w-[calc(100%-16rem)]'}`}>
       <div className="flex items-center gap-4">
-        {user && !orgLoading && organizations.length > 0 && (
-          organizations.length === 1 ? (
-            <span className="font-semibold text-indigo-700 text-sm mr-2">{currentOrg?.name}</span>
-          ) : (
-            <select
-              className="font-semibold text-indigo-700 text-sm border rounded px-2 py-1 mr-2 bg-white"
-              value={currentOrg?.id || ''}
-              onChange={e => {
-                const org = organizations.find(o => o.id === e.target.value);
-                if (org) setCurrentOrg(org);
-              }}
-            >
-              {organizations.map(org => (
-                <option key={org.id} value={org.id}>{org.name}</option>
-              ))}
-            </select>
-          )
-        )}
-        {/* Search bar center */}
-        <div className="flex-1 flex justify-center">
+        <button onClick={onMenuButtonClick} className="lg:hidden">
+          <Bars3Icon className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+        </button>
+        <div className="relative hidden md:block">
           <input
             type="text"
             placeholder="Search..."
-            className="w-full max-w-md rounded border px-3 py-1.5 text-sm focus:outline-none focus:ring"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearch}
+            className="w-full rounded-md border-white/30 bg-white/50 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-blue-500"
           />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
         </div>
       </div>
 
-      {/* Right section */}
-      <div className="flex items-center gap-4 ml-4">
-        <button className="rounded-full p-2 hover:bg-gray-100">
-          <PlusIcon className="h-6 w-6 text-indigo-600" />
-        </button>
-        <button className="rounded-full p-2 hover:bg-gray-100">
-          <BellIcon className="h-6 w-6 text-gray-500" />
-        </button>
-
-        {/* User Profile Section */}
-        {loading ? (
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
-            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
-          </div>
-        ) : user ? (
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center gap-2 rounded-full p-2 hover:bg-gray-100 transition-colors"
-            >
-              <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center">
-                <UserIcon className="h-5 w-5 text-white" />
-              </div>
-              <div className="hidden sm:block text-left">
-                <div className="text-sm font-medium text-gray-900">
-                  {getUserDisplayName()}
-                </div>
-                <div className="text-xs text-gray-500 capitalize">
-                  {getUserRole()}
-                </div>
-              </div>
-              <ChevronDownIcon className="h-4 w-4 text-gray-400" />
-            </button>
-
-            {/* Dropdown Menu */}
-            {showDropdown && (
-              <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                <div className="py-1">
-                  {/* User Info */}
-                  <div className="px-4 py-2 border-b">
-                    <div className="text-sm font-medium text-gray-900">
-                      {getUserDisplayName()}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {user.email}
-                    </div>
-                    <div className="text-xs text-gray-400 capitalize mt-1">
-                      {getUserRole()}
-                    </div>
-                  </div>
-
-                  {/* Menu Items */}
-                  <Link
-                    href="/profile"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setShowDropdown(false)}
-                  >
-                    <UserIcon className="h-4 w-4 mr-3" />
-                    Profile
-                  </Link>
-                  
-                  <Link
-                    href="/settings"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setShowDropdown(false)}
-                  >
-                    <Cog6ToothIcon className="h-4 w-4 mr-3" />
-                    Settings
-                  </Link>
-
-                  <div className="border-t">
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <ArrowRightOnRectangleIcon className="h-4 w-4 mr-3" />
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <Link
-            href="/login"
-            className="flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition-colors"
+      <div className="flex items-center gap-4">
+        <div className="relative" ref={createDropdownRef}>
+          <button 
+            onClick={() => setShowCreateDropdown(!showCreateDropdown)}
+            className="btn-primary flex items-center gap-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800"
           >
-            <UserCircleIcon className="h-5 w-5" />
-            <span className="hidden sm:inline">Sign In</span>
-          </Link>
-        )}
+            <PlusIcon className="h-5 w-5" />
+            <span className="hidden sm:inline">Create</span>
+            <ChevronDownIcon className="h-4 w-4" />
+          </button>
+          {showCreateDropdown && (
+            <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-md shadow-lg bg-white/80 backdrop-blur-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800/80 dark:ring-white/10">
+              <div className="py-1">
+                <Link href="/invoices/new" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-white/50 dark:text-gray-300 dark:hover:bg-gray-700/50">
+                  <DocumentTextIcon className="h-4 w-4 mr-3" /> New Invoice
+                </Link>
+                <Link href="/recurring-invoices/new" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-white/50 dark:text-gray-300 dark:hover:bg-gray-700/50">
+                  <ArrowPathIcon className="h-4 w-4 mr-3" /> New Recurring Invoice
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <div className="relative" ref={notificationsRef}>
+          <button 
+            className="rounded-full p-2 text-gray-500 hover:bg-white/50 dark:text-gray-400 dark:hover:bg-gray-700/50"
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
+            <BellIcon className="h-6 w-6" />
+          </button>
+          {showNotifications && (
+            <div className="absolute right-0 mt-2 w-80 rounded-lg shadow-lg bg-white/80 backdrop-blur-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800/80 dark:ring-white/10">
+              <div className="p-3 font-semibold border-b border-white/20 dark:border-gray-700">Notifications</div>
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.length > 0 ? (
+                  notifications.map((n) => (
+                    <Link key={n.id} href={n.link || '#'} className="block px-4 py-3 text-sm hover:bg-white/50 dark:hover:bg-gray-700/50">
+                      {n.message}
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{new Date(n.created_at).toLocaleString()}</p>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="p-4 text-sm text-center text-gray-500 dark:text-gray-400">No new notifications</div>
+                )}
+              </div>
+              <div className="border-t border-white/20 dark:border-gray-700">
+                <Link href="/notifications" className="block py-2 text-sm font-medium text-center text-blue-600 hover:bg-white/50 dark:text-blue-400 dark:hover:bg-gray-700/50">View all notifications</Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="relative" ref={userDropdownRef}>
+          <button onClick={() => setShowUserDropdown(!showUserDropdown)} className="flex items-center gap-2">
+            <UserCircleIcon className="h-9 w-9 text-gray-500 dark:text-gray-400" />
+            <div className="hidden sm:block text-left">
+              <div className="text-sm font-medium text-gray-800 dark:text-gray-100">{getUserDisplayName()}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">{getUserRole()}</div>
+            </div>
+            <ChevronDownIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+          </button>
+          {showUserDropdown && (
+            <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-md shadow-lg bg-white/80 backdrop-blur-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800/80 dark:ring-white/10">
+              <div className="py-1">
+                <div className="px-4 py-3 border-b border-white/20 dark:border-gray-700">
+                  <p className="text-sm font-medium truncate">{getUserDisplayName()}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                </div>
+                <Link href="/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-white/50 dark:text-gray-300 dark:hover:bg-gray-700/50">
+                  <UserIcon className="h-4 w-4 mr-3" /> Profile
+                </Link>
+                <Link href="/settings" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-white/50 dark:text-gray-300 dark:hover:bg-gray-700/50">
+                  <Cog6ToothIcon className="h-4 w-4 mr-3" /> Settings
+                </Link>
+                <div className="py-1 border-t border-white/20 dark:border-gray-700">
+                  <form action={handleLogout}>
+                    <button type="submit" className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50">
+                      <ArrowRightOnRectangleIcon className="h-4 w-4 mr-3" /> Sign Out
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
-} 
+}

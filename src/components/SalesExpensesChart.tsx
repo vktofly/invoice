@@ -1,3 +1,4 @@
+"use client";
 import { useState } from 'react';
 
 /**
@@ -29,4 +30,4 @@ export default function SalesExpensesChart() {
       <div className="h-48 flex items-center justify-center text-gray-400">[Sales/Expenses Chart]</div>
     </div>
   );
-} 
+}

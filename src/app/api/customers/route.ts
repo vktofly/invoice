@@ -3,12 +3,37 @@ import { cookies } from 'next/headers';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 
 export async function POST(req: NextRequest) {
-  const { name, email } = await req.json();
+  const {
+    customer_type,
+    salutation,
+    first_name,
+    last_name,
+    company_name,
+    display_name,
+    currency,
+    email,
+    work_phone,
+    mobile,
+    billing_attention,
+    billing_country,
+    billing_address1,
+    billing_address2,
+    billing_city,
+    billing_state,
+    billing_pin,
+    billing_phone,
+    billing_fax,
+    shipping_attention,
+    shipping_country,
+    shipping_address1,
+    shipping_address2,
+    shipping_city,
+    shipping_state,
+    shipping_pin,
+    shipping_phone,
+    shipping_fax,
+  } = await req.json();
   
-  if (!email) {
-    return NextResponse.json({ error: 'Email is required' }, { status: 400 });
-  }
-
   // Get the authenticated user
   const supabase = createRouteHandlerClient({ cookies });
   const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -21,9 +46,35 @@ export async function POST(req: NextRequest) {
   const { data: customer, error } = await supabase
     .from('customers')
     .insert({
-      name,
+      user_id: user.id,
+      customer_type,
+      salutation,
+      first_name,
+      last_name,
+      company_name,
+      display_name,
+      currency,
       email,
-      user_id: user.id, // Use UUID string directly as text
+      work_phone,
+      mobile,
+      billing_attention,
+      billing_country,
+      billing_address1,
+      billing_address2,
+      billing_city,
+      billing_state,
+      billing_pin,
+      billing_phone,
+      billing_fax,
+      shipping_attention,
+      shipping_country,
+      shipping_address1,
+      shipping_address2,
+      shipping_city,
+      shipping_state,
+      shipping_pin,
+      shipping_phone,
+      shipping_fax,
     })
     .select()
     .single();
@@ -48,8 +99,8 @@ export async function GET() {
   const { data: customers, error } = await supabase
     .from('customers')
     .select('*')
-    .eq('user_id', user.id) // Use UUID string directly as text
-    .order('name');
+    .eq('user_id', user.id)
+    .order('display_name');
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
