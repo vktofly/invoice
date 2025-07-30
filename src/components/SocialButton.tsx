@@ -27,9 +27,6 @@ export const SocialButton = ({ provider }: { provider: 'google' | 'apple' | 'fac
   const handleOAuthSignIn = async (provider: 'google' | 'apple' | 'facebook') => {
     await supabase.auth.signInWithOAuth({
       provider,
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
-      },
     });
   };
 

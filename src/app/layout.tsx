@@ -23,19 +23,11 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  // const supabase = createClient(); // Temporarily disabled for debugging
-  // const { data: { user } } = await supabase.auth.getUser(); // Temporarily disabled for debugging
-  const user = null; // Temporarily hardcoded for debugging
-
   return (
     <html lang="en" className={poppins.variable}>
       <body className="bg-gradient-to-br from-indigo-100 via-white to-cyan-100 dark:from-gray-800 dark:via-gray-900 dark:to-black">
         <div className="min-h-screen text-gray-900 dark:text-gray-100 antialiased">
-          <AuthProvider initialUser={user}>
-            <OrganizationProvider>
-              {children}
-            </OrganizationProvider>
-          </AuthProvider>
+          {children}
         </div>
       </body>
     </html>

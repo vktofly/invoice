@@ -5,6 +5,9 @@ import { redirect } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
 import ProtectedPageWrapper from '@/components/ProtectedPageWrapper';
 
+import { AuthProvider } from '@/contexts/AuthContext';
+import { OrganizationProvider } from '@/contexts/OrganizationContext';
+
 export default async function ProtectedLayout({ children }: { children: ReactNode }) {
   const cookieStore = cookies();
 
@@ -38,7 +41,11 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  console.log('Protected Layout - User:', user?.email);
 
   if (!user) {
     return redirect('/login');
@@ -49,8 +56,10 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   }
 
   return (
-    <ProtectedPageWrapper user={user}>
-      {children}
-    </ProtectedPageWrapper>
+    <AuthProvider>
+      <OrganizationProvider>
+        <ProtectedPageWrapper user={user}>{children}</ProtectedPageWrapper>
+      </OrganizationProvider>
+    </AuthProvider>
   );
 }

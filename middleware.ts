@@ -38,26 +38,12 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  // Refresh session if expired - required for Server Components
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
-
-  // Redirect logged-in users from auth pages to home
-  if (session) {
-    if (pathname === '/' || pathname === '/login' || pathname === '/register' || pathname === '/update-password' || pathname === '/reset-password' || pathname === '/choose-role') {
-      return NextResponse.redirect(new URL('/home', request.url));
-    }
-  }
-
-  // Protect routes
-  const protectedPaths = ['/home', '/invoices', '/customers', '/products', '/expenses', '/recurring-invoices', '/time-tracking', '/estimates', '/settings', '/profile', '/admin', '/organization-setup', '/organizations', '/search', '/notifications'];
-  
-  if (!session && protectedPaths.some(p => pathname.startsWith(p))) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/login';
-    redirectUrl.searchParams.set('redirectedFrom', pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
+  console.log('Middleware - User:', user?.email);
 
   return response;
 }
