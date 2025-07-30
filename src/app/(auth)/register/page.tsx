@@ -3,38 +3,16 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { signUp } from '../login/actions';
-import { supabase } from '@/lib/supabase/client';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple, FaFacebook } from 'react-icons/fa';
 import React from 'react';
+import { SocialButton } from '@/components/SocialButton';
 
 export default function RegisterPage({
   searchParams,
 }: {
   searchParams: { error?: string; message?: string };
 }) {
-
-  
-
-  const handleOAuthSignIn = async (provider: 'google' | 'apple' | 'facebook') => {
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    });
-  };
-
-  const SocialButton = ({ provider, icon, label }: { provider: 'google' | 'apple' | 'facebook', icon: React.ReactElement, label: string }) => (
-    <button
-      type="button"
-      onClick={() => handleOAuthSignIn(provider)}
-      className="flex items-center justify-center w-full py-3 px-4 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors duration-300"
-    >
-      {icon}
-      <span className="ml-3 font-medium">{label}</span>
-    </button>
-  );
 
   return (
     <div className="min-h-screen flex bg-slate-50">
@@ -74,6 +52,21 @@ export default function RegisterPage({
           )}
 
           <form action={signUp} className="space-y-6">
+            <div>
+              <label htmlFor="fullName" className="block text-sm font-medium text-slate-700">
+                Full Name
+              </label>
+              <input
+                id="fullName"
+                name="fullName"
+                type="text"
+                autoComplete="name"
+                required
+                className="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="John Doe"
+              />
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700">
                 Email Address
@@ -121,9 +114,9 @@ export default function RegisterPage({
           </div>
 
           <div className="space-y-4">
-            <SocialButton provider="google" icon={<FcGoogle size={22} />} label="Sign up with Google" />
-            <SocialButton provider="facebook" icon={<FaFacebook size={22} className="text-blue-800" />} label="Sign up with Facebook" />
-            <SocialButton provider="apple" icon={<FaApple size={22} />} label="Sign up with Apple" />
+            <SocialButton provider="google" />
+            <SocialButton provider="facebook" />
+            <SocialButton provider="apple" />
           </div>
             <p className="text-xs text-slate-500 mt-6 text-center">
               By creating an account, you agree to our{' '}

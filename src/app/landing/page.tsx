@@ -1,27 +1,32 @@
-'use client';
-import React, { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import Features from './components/Features';
 import Testimonials from './components/Testimonials';
 import Footer from './components/Footer';
 
-const LandingPage = () => {
-  const { user } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Redirect to the main app if the user is already logged in
-    if (user) {
-      router.push('/home');
+export default async function LandingPage() {
+  const cookieStore = cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+      },
     }
-  }, [user, router]);
+  );
 
-  // Render nothing or a loading spinner while checking auth status
-  if (user) {
-    return null; 
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (session) {
+    redirect('/home');
   }
 
   return (
@@ -33,6 +38,4 @@ const LandingPage = () => {
       <Footer />
     </div>
   );
-};
-
-export default LandingPage;
+}

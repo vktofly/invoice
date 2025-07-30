@@ -12,47 +12,35 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children, initialUser }: { children: ReactNode, initialUser: User | null }) {
-  const [user, setUser] = useState<User | null>(initialUser);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
 
   useEffect(() => {
-    const fetchUserProfile = async (user: User) => {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      return { ...user, ...profile };
-    };
-
-    const updateUser = async (user: User | null) => {
-      if (user) {
-        const userWithProfile = await fetchUserProfile(user);
-        setUser(userWithProfile);
-      } else {
-        setUser(null);
-      }
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
       setLoading(false);
     };
 
-    (async () => {
-      if (initialUser) {
-        await updateUser(initialUser);
+    getSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // Don't set user here, just end loading state
+        setLoading(false);
       } else {
+        setUser(session?.user ?? null);
         setLoading(false);
       }
-    })();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      await updateUser(session?.user ?? null);
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [initialUser]);
+  }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
