@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import {
   DocumentPlusIcon,
   PaperAirplaneIcon,
@@ -51,6 +51,7 @@ const ActivityIcon = ({ type }: { type: Activity['activity_type'] }) => {
 export default function InvoiceActivityTimeline({ invoiceId }: InvoiceActivityTimelineProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -76,7 +77,7 @@ export default function InvoiceActivityTimeline({ invoiceId }: InvoiceActivityTi
     };
 
     fetchActivities();
-  }, [invoiceId]);
+  }, [invoiceId, supabase]);
 
   if (loading) {
     return <p>Loading activity...</p>;
@@ -114,3 +115,4 @@ export default function InvoiceActivityTimeline({ invoiceId }: InvoiceActivityTi
     </div>
   );
 }
+

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple, FaFacebook } from 'react-icons/fa';
 import IconWrapper from './IconWrapper';
@@ -22,11 +22,14 @@ const providerDetails = {
 };
 
 export const SocialButton = ({ provider }: { provider: 'google' | 'apple' | 'facebook' }) => {
-  
+  const supabase = createClient();
 
   const handleOAuthSignIn = async (provider: 'google' | 'apple' | 'facebook') => {
     await supabase.auth.signInWithOAuth({
       provider,
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback`,
+      },
     });
   };
 

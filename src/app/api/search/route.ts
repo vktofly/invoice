@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Search query is required' }, { status: 400 });
   }
 
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = createSupabaseServerClient();
   const searchQuery = `%${query}%`;
 
   try {
@@ -67,3 +67,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'An error occurred during the search.' }, { status: 500 });
   }
 }
+

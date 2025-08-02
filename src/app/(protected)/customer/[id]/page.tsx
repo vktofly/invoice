@@ -1,10 +1,10 @@
-import { createClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { EnvelopeIcon, PhoneIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
 async function getCustomerData(id: string) {
-  const supabase = createClient();
+  const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
     .from('customers')
     .select('*')

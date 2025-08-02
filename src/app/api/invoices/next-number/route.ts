@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 
 export async function GET() {
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = createSupabaseServerClient();
   const { data: maxData } = await supabase
     .from('invoices')
     .select('number')
@@ -16,4 +16,6 @@ export async function GET() {
   const number = String(nextNumber).padStart(5, '0');
   return NextResponse.json({ number });
 } 
+
+
 

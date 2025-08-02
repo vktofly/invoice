@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   const {
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   } = await req.json();
   
   // Get the authenticated user
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = createSupabaseServerClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (userError || !user) {
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   // Get the authenticated user
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = createSupabaseServerClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (userError || !user) {
@@ -108,3 +108,4 @@ export async function GET() {
 
   return NextResponse.json({ customers: customers || [] });
 }
+

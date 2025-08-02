@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 export default function NotificationSettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -12,11 +12,11 @@ export default function NotificationSettingsPage() {
     notify_promotions: false,
   });
   const [message, setMessage] = useState<string | null>(null);
-
-  
+  const supabase = createClient();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    const getUserPreferences = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setPrefs({
           notify_paid: user.user_metadata.notify_paid ?? true,
@@ -25,22 +25,24 @@ export default function NotificationSettingsPage() {
         });
       }
       setLoading(false);
-    });
-  }, []);
+    };
+    getUserPreferences();
+  }, [supabase]);
 
   const save = async () => {
     setSaving(true);
     const { error } = await supabase.auth.updateUser({ data: prefs });
     setSaving(false);
-    setMessage(error ? error.message : 'Saved');
+    setMessage(error ? error.message : 'Saved successfully!');
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <p className="text-gray-600">Loading…</p>
       </div>
     );
+  }
 
   return (
     <div className="mx-auto max-w-lg space-y-8 p-8">
@@ -81,4 +83,4 @@ export default function NotificationSettingsPage() {
       </div>
     </div>
   );
-} 
+}

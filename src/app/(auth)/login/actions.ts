@@ -1,28 +1,11 @@
 'use server';
 
-import { createServerClient } from '@supabase/ssr';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export async function login(formData: FormData) {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options) {
-          cookieStore.set({ name, value: '', ...options });
-        },
-      },
-    }
-  );
+  const supabase = createSupabaseServerClient();
 
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
@@ -40,24 +23,7 @@ export async function login(formData: FormData) {
 }
 
 export async function signUp(formData: FormData) {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options) {
-          cookieStore.set({ name, value: '', ...options });
-        },
-      },
-    }
-  );
+  const supabase = createSupabaseServerClient();
 
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
@@ -79,29 +45,12 @@ export async function signUp(formData: FormData) {
 }
 
 export async function resetPassword(formData: FormData) {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options) {
-          cookieStore.set({ name, value: '', ...options });
-        },
-      },
-    }
-  );
+  const supabase = createSupabaseServerClient();
 
   const email = formData.get('email') as string;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/update-password`,
+    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback`,
   });
 
   if (error) {
@@ -113,24 +62,7 @@ export async function resetPassword(formData: FormData) {
 }
 
 export async function updatePassword(formData: FormData) {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options) {
-          cookieStore.set({ name, value: '', ...options });
-        },
-      },
-    }
-  );
+  const supabase = createSupabaseServerClient();
 
   const password = formData.get('password') as string;
 
@@ -146,24 +78,7 @@ export async function updatePassword(formData: FormData) {
 }
 
 export async function signOut() {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options) {
-          cookieStore.set({ name, value: '', ...options });
-        },
-      },
-    }
-  );
+  const supabase = createSupabaseServerClient();
 
   await supabase.auth.signOut();
   return redirect('/login');

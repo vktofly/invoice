@@ -9,7 +9,7 @@ import AddCustomerModal from '@/components/invoice/AddCustomerModal';
 import AddAddressModal from '@/components/invoice/AddAddressModal';
 import InvoiceActions from '@/components/invoice/InvoiceActions';
 import FormErrors from '@/components/FormErrors';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { pdf } from '@react-pdf/renderer';
 import { saveAs } from 'file-saver';
 import InvoicePDF from '@/components/invoice/InvoicePDF';
@@ -104,6 +104,7 @@ const useIsMobile = () => {
 };
 
 export default function InvoiceForm({ initialInvoice, user, customers: initialCustomers, organization }) {
+    const supabase = createClient();
   const isMobile = useIsMobile();
   const router = useRouter();
 
