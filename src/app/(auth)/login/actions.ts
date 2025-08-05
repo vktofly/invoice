@@ -45,6 +45,53 @@ export async function signUp(formData: FormData) {
     return redirect(`/register?error=${error.message}`);
   }
 
+  if (data.user) {
+    // Create a personal workspace for the new user
+    const { data: orgData, error: orgError } = await supabaseAdmin
+      .from('organizations')
+      .insert({
+        name: `${data.user.email}'s Workspace`,
+        owner: data.user.id,
+        // Add other default fields for organization as needed
+        // For example:
+        country: 'United States',
+        state: 'Unspecified',
+        currency: 'USD',
+        language: 'en-US',
+        timezone: 'America/New_York',
+        industry: 'Unspecified'
+      })
+      .select('id')
+      .single();
+
+    if (orgError || !orgData) {
+      await supabaseAdmin.auth.admin.deleteUser(data.user.id);
+      return redirect(`/register?error=Failed to create personal workspace.`);
+    }
+
+    // Update user's profile with the new organization ID
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .update({ organization_id: orgData.id })
+      .eq('id', data.user.id);
+
+    if (profileError) {
+      await supabaseAdmin.auth.admin.deleteUser(data.user.id);
+      return redirect(`/register?error=Failed to link workspace to profile.`);
+    }
+
+    const { error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .insert({ user_id: data.user.id, role: role });
+
+    if (roleError) {
+      // If role insertion fails, you might want to delete the user
+      // to avoid an inconsistent state.
+      await supabaseAdmin.auth.admin.deleteUser(data.user.id);
+      return redirect(`/register?error=Failed to assign role. Please try again.`);
+    }
+  }
+
   // If signUp is successful and email confirmation is disabled, 
   // data.session will be populated. No need to sign in again.
   if (!data.session) {

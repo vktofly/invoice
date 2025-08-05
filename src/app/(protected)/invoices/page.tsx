@@ -1,6 +1,9 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import InvoiceListClient from './InvoiceListClient';
+import { Database } from '@/types/db';
+
+type InvoiceStatus = Database['public']['Enums']['invoice_status'];
 
 export const revalidate = 0;
 
@@ -89,7 +92,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams?: { 
 
   // Apply status filter if present
   if (searchParams?.status) {
-    query = query.eq('status', searchParams.status);
+    query = query.eq('status', searchParams.status as InvoiceStatus);
   }
 
   const { data: invoices, error } = await query;

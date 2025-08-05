@@ -198,23 +198,15 @@ export default function InvoiceListClient({ initialInvoices, userRole }: Invoice
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center space-x-2">
                       
-                      {userRole !== 'customer' && (
-                        <>
-                          <button
-                            className="btn-secondary btn-sm"
-                            onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${inv.id}/edit`); }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(inv.id); }}
-                            className="btn-danger btn-sm p-2"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
                       <InvoicePDFDownloader invoiceId={inv.id} />
+                      {userRole !== 'customer' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(inv.id); }}
+                          className="btn-danger btn-sm p-2"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

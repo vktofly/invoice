@@ -27,9 +27,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Could not determine organization.' }, { status: 500 });
   }
 
-  const { error } = await supabase.from('expenses').insert([
-    { ...result.data, user_id: user.id, organization_id: org.id },
-  ]);
+  if (!result.data.amount || !result.data.expense_date) {
+    return NextResponse.json({ error: 'Amount and expense date are required.' }, { status: 400 });
+  }
+
+  const { error } = await supabase.from('expenses').insert(
+    { ...result.data, user_id: user.id, organization_id: org.id, amount: result.data.amount, expense_date: result.data.expense_date },
+  );
 
   if (error) {
     console.error('Error creating expense:', error);

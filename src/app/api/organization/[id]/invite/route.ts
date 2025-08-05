@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
   // Check if user already exists
   const { data: existingUser } = await supabase
-    .from('users')
+    .from('profiles')
     .select('id, email')
     .eq('email', email)
     .single();
@@ -82,14 +82,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   // Return updated member list
   const { data, error: listError } = await supabase
     .from('organization_users')
-    .select('user_id, role, status, invited_email, users: user_id(email, id)')
+    .select('user_id, role, status, invited_email, profiles: user_id(email, id)')
     .eq('org_id', orgId);
   if (listError) {
     return NextResponse.json({ error: listError.message }, { status: 500 });
   }
   const members = (data || []).map((row: any) => ({
     id: row.user_id,
-    email: row.users?.email || row.invited_email,
+    email: row.profiles?.email || row.invited_email,
     role: row.role,
     status: row.status,
     invited_email: row.invited_email,

@@ -51,7 +51,7 @@ export async function GET(
     }
   }
   
-  const responsePayload = { ...invoice };
+  const responsePayload: any = { ...invoice };
 
   if (typeof responsePayload.custom_fields === 'string') {
     try {

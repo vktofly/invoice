@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { Database } from '@/types/db';
+
+type InvoiceStatus = Database['public']['Enums']['invoice_status'];
 
 import { Invoice, InvoiceItem } from '@/lib/types';
 
@@ -25,7 +28,7 @@ export async function GET(request: NextRequest) {
   `);
 
   if (status) {
-    invoiceQuery = invoiceQuery.eq('status', status);
+    invoiceQuery = invoiceQuery.eq('status', status as InvoiceStatus);
   }
   if (customerId) {
     invoiceQuery = invoiceQuery.eq('customer_id', customerId);
@@ -38,7 +41,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch invoices: " + invoiceError.message }, { status: 500 });
   }
 
-  const processedInvoices = invoices?.map(invoice => {
+  const processedInvoices = invoices?.map((invoice: any) => {
     if (typeof invoice.custom_fields === 'string') {
       try {
         invoice.custom_fields = JSON.parse(invoice.custom_fields);
@@ -55,7 +58,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { items = [], currency, ...invoiceData } = body as { items?: InvoiceItem[], currency?: string } & Partial<Invoice>;
+  const { items = [], currency, customer_id, ...invoiceData } = body as { items?: InvoiceItem[], currency?: string, customer_id: string } & Partial<Invoice>;
 
   const {
     billing_address_id,
@@ -157,10 +160,11 @@ export async function POST(request: NextRequest) {
     processed_custom_fields = [];
   }
 
-  const insertPayload = { 
-    ...restOfInvoiceData, 
-    number, 
-    owner: user.id, 
+  const insertPayload = {
+    ...restOfInvoiceData,
+    customer_id,
+    number,
+    owner: user.id,
     organization_id: profile.organization_id,
     currency: currency || 'USD',
     billing_address_id,
@@ -174,7 +178,7 @@ export async function POST(request: NextRequest) {
     shipping_method,
     tracking_number,
     shipping_cost,
-    custom_fields: processed_custom_fields,
+    custom_fields: JSON.stringify(processed_custom_fields),
     updated_at: new Date().toISOString(),
   };
 

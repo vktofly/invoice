@@ -28,16 +28,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Recurring invoice not found' }, { status: 404 });
   }
 
-  const nextInvoiceNumber = await getNextInvoiceNumber();
+  const { data: nextInvoiceNumber, error: nextInvoiceNumberError } = await getNextInvoiceNumber();
+
+  if (nextInvoiceNumberError) {
+    return NextResponse.json({ error: nextInvoiceNumberError.message }, { status: 500 });
+  }
 
   const newInvoice = {
     customer_id: recurringInvoice.customer_id,
-    invoice_number: nextInvoiceNumber,
-    invoice_date: new Date().toISOString().split('T')[0],
+    number: nextInvoiceNumber,
+    issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0], // Assuming due in 30 days
-    total_amount: recurringInvoice.total_amount,
-    status: 'draft',
-    recurring_invoice_id: recurringInvoice.id,
+    total: recurringInvoice.total_amount,
+    status: 'draft' as const,
+    owner: user.id,
     // Copy other relevant fields from recurringInvoice
   };
 

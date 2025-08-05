@@ -46,10 +46,24 @@ export default function PostLoginPage() {
       setMessage('Session verified. Checking your profile...');
       const { user } = session;
 
-      // Fetch user profile to get the role and organization
+      // Fetch user role from user_roles table
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (roleError || !roleData) {
+        setError('Could not retrieve your user role. Please try again.');
+        return;
+      }
+
+      const userRole = roleData.role;
+
+      // Fetch user profile to get the organization
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('role, organization_id')
+        .select('organization_id')
         .eq('id', user.id)
         .single();
 
@@ -60,41 +74,29 @@ export default function PostLoginPage() {
 
       // --- ROLE-BASED LOGIC ---
 
-      if (profile.role === 'customer') {
+      if (userRole === 'customer') {
         // Customer role: Redirect straight to their portal.
         setMessage('Redirecting to your customer portal...');
         router.push('/portal');
         return;
       }
 
-      if (profile.role === 'user') {
+      if (userRole === 'user') {
         // User role: Check for an organization.
         if (profile.organization_id) {
           // Organization already exists. Redirect to the main dashboard.
           setMessage('Organization found. Redirecting to the dashboard...');
           router.push('/invoices');
         } else {
-          // No organization linked. Create one.
-          setMessage('No organization found. Creating one for you...');
-          try {
-            const response = await fetch('/api/create-org', {
-              method: 'POST',
-            });
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || 'Failed to create organization.');
-            }
-            setMessage('Organization created successfully! Redirecting...');
-            router.push('/invoices');
-          } catch (e: any) {
-            setError(`Error during setup: ${e.message}`);
-          }
+          // No organization linked. This should not happen with the new sign-up flow,
+          // but we can handle it as a fallback.
+          setMessage('No organization linked. Please contact support.');
         }
         return;
       }
 
       // Fallback for any other unexpected role
-      setError(`Unknown role: ${profile.role}. Please contact support.`);
+      setError(`Unknown role: ${userRole}. Please contact support.`);
     };
 
     processUser();

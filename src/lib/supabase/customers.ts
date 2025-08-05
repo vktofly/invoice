@@ -1,4 +1,5 @@
-import { supabase } from './client';
+import { createClient } from './client';
+const supabase = createClient();
 import type { TopCustomer } from '../types';
 
 export async function getTopCustomers() {

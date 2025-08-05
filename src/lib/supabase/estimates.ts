@@ -1,4 +1,5 @@
-import { supabase } from './client';
+import { createClient } from './client';
+const supabase = createClient();
 import { Estimate } from '../types';
 
 export async function getEstimates() {

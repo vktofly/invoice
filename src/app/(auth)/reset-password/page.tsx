@@ -2,8 +2,9 @@
 
 import { resetPassword } from '@/app/(auth)/login/actions';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
   const message = searchParams.get('message');
@@ -35,4 +36,12 @@ export default function ResetPasswordPage() {
       </div>
     </div>
   );
-} 
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
