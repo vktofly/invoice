@@ -84,6 +84,21 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
 
+  // Get user's organization ID from their profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !profile || !profile.organization_id) {
+    console.error('Failed to get user profile or organization ID:', profileError);
+    return NextResponse.json(
+      { error: 'User profile is not configured with an organization.' },
+      { status: 400 } // Bad Request, as the user setup is incomplete
+    );
+  }
+
   // If number is missing or empty, generate a new one
   let number = invoiceData.number;
   if (!number) {
@@ -146,6 +161,7 @@ export async function POST(request: NextRequest) {
     ...restOfInvoiceData, 
     number, 
     owner: user.id, 
+    organization_id: profile.organization_id,
     currency: currency || 'USD',
     billing_address_id,
     shipping_address_id,
@@ -207,4 +223,3 @@ type ItemPayload = {
   discount_type?: 'percentage' | 'fixed';
   discount_amount?: number;
 };
-

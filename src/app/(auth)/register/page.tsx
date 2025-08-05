@@ -98,6 +98,21 @@ export default function RegisterPage({
             </div>
 
             <div>
+              <label htmlFor="role" className="block text-sm font-medium text-slate-700">
+                Role
+              </label>
+              <select
+                id="role"
+                name="role"
+                required
+                className="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="user">User</option>
+                <option value="customer">Customer</option>
+              </select>
+            </div>
+
+            <div>
               <button
                 type="submit"
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-60"

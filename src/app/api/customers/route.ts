@@ -42,11 +42,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
+  // Get user's organization ID from their profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !profile || !profile.organization_id) {
+    return NextResponse.json(
+      { error: 'User profile is not configured with an organization.' },
+      { status: 400 }
+    );
+  }
+
   // Insert customer into the customers table
   const { data: customer, error } = await supabase
     .from('customers')
     .insert({
       user_id: user.id,
+      organization_id: profile.organization_id,
       customer_type,
       salutation,
       first_name,
@@ -108,4 +123,3 @@ export async function GET() {
 
   return NextResponse.json({ customers: customers || [] });
 }
-

@@ -8,9 +8,10 @@ import Navbar from '@/components/Navbar';
 interface ProtectedPageWrapperProps {
   user: User;
   children: ReactNode;
+  userRole: string;
 }
 
-export default function ProtectedPageWrapper({ user, children }: ProtectedPageWrapperProps) {
+export default function ProtectedPageWrapper({ user, children, userRole }: ProtectedPageWrapperProps) {
   const [isCollapsed, setCollapsed] = useState(false);
 
   const toggleCollapse = () => {
@@ -22,7 +23,7 @@ export default function ProtectedPageWrapper({ user, children }: ProtectedPageWr
       <Sidebar
         isCollapsed={isCollapsed}
         toggleCollapse={toggleCollapse}
-        userRole={user.user_metadata.role || 'customer'}
+        userRole={userRole}
       />
       <div className={`flex flex-col transition-all duration-300 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         <Navbar

@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams, origin } = new URL(request.url);
     const code = searchParams.get('code');
-    const next = searchParams.get('next') ?? '/home';
+    const next = searchParams.get('next') ?? '/post-login';
 
     if (code) {
       const cookieStore = cookies();
@@ -28,14 +28,12 @@ export async function GET(request: NextRequest) {
           },
         }
       );
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
       if (!error) {
-        // Using searchParams to check for recovery type is more robust
-        if (searchParams.get('type') === 'recovery') {
-          return NextResponse.redirect(`${origin}/update-password?next=${next}`);
-        }
         return NextResponse.redirect(`${origin}${next}`);
       }
+      
     }
 
     // If there's an error or no code, redirect to login with a message

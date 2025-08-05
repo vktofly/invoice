@@ -69,9 +69,7 @@ const navGroups: NavGroup[] = [
 ];
 
 const customerNavItems: NavItem[] = [
-  { name: 'My Invoices', href: '/customer/invoices', icon: DocumentTextIcon },
-  { name: 'Profile', href: '/profile', icon: UserCircleIcon },
-  { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+  { name: 'My Portal', href: '/portal', icon: DocumentTextIcon },
 ];
 
 interface SidebarProps {
