@@ -1,4 +1,6 @@
-import { supabase } from './client';
+import { createClient } from './client';
+
+const supabase = createClient();
 
 export async function getRecurringInvoicesSummary() {
   
