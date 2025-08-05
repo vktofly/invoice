@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   const {
@@ -35,11 +35,25 @@ export async function POST(req: NextRequest) {
   } = await req.json();
   
   // Get the authenticated user
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = createSupabaseServerClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (userError || !user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  // Get user's organization ID from their profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !profile || !profile.organization_id) {
+    return NextResponse.json(
+      { error: 'User profile is not configured with an organization.' },
+      { status: 400 }
+    );
   }
 
   // Insert customer into the customers table
@@ -47,6 +61,7 @@ export async function POST(req: NextRequest) {
     .from('customers')
     .insert({
       user_id: user.id,
+      organization_id: profile.organization_id,
       customer_type,
       salutation,
       first_name,
@@ -88,7 +103,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   // Get the authenticated user
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = createSupabaseServerClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (userError || !user) {

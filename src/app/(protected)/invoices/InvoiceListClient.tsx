@@ -171,13 +171,17 @@ export default function InvoiceListClient({ initialInvoices, userRole }: Invoice
                 >
                   <td className="px-4 py-3 text-gray-800 dark:text-gray-100">{inv.number}</td>
                   <td className="px-4 py-3 text-gray-800 dark:text-gray-100">
-                    <Link
-                      href={`/customer/${inv.customer.id}`}
-                      className="hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {getCustomerDisplayName(inv.customer)}
-                    </Link>
+                    {inv.customer ? (
+                      <Link
+                        href={`/customer/${inv.customer.id}`}
+                        className="hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {getCustomerDisplayName(inv.customer)}
+                      </Link>
+                    ) : (
+                      <span>Unknown Customer</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : ''}</td>
                   <td className="px-4 py-3 capitalize">

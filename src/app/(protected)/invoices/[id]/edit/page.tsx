@@ -1,67 +1,73 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { getUser, getUserRole, getServerSupabase } from '@/lib/supabase/server-utils';
 import InvoiceForm from '@/components/invoice/InvoiceForm';
-import { Invoice, User, Customer, Organization } from '@/lib/types';
+import { notFound } from 'next/navigation';
+import { User, Customer, Organization, Invoice } from '@/lib/types';
 
-export default function EditInvoicePage() {
-  const params = useParams();
-  const { id } = params;
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [organization, setOrganization] = useState<Organization | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [invoiceRes, userRes, customersRes, orgRes] = await Promise.all([
-          fetch(`/api/invoices/${id}`),
-          fetch('/api/profile'),
-          fetch('/api/customers'),
-          fetch('/api/organization'),
-        ]);
-
-        if (!invoiceRes.ok) throw new Error('Failed to fetch invoice data for editing.');
-        if (!userRes.ok) throw new Error('Failed to fetch user data.');
-        if (!customersRes.ok) throw new Error('Failed to fetch customers data.');
-        if (!orgRes.ok) throw new Error('Failed to fetch organization data.');
-
-        const invoiceData = await invoiceRes.json();
-        const userData = await userRes.json();
-        const customersData = await customersRes.json();
-        const orgData = await orgRes.json();
-
-        setInvoice(invoiceData);
-        setUser(userData.user);
-        setCustomers(customersData.customers);
-        setOrganization(orgData.organization);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchData();
-    }
-  }, [id]);
-
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading invoice data...</div>;
-  }
-
+async function getInvoice(id: string, supabase: any) {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*, items:invoice_items(*), customer:customers(*)')
+    .eq('id', id)
+    .single();
   if (error) {
-    return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>;
+    console.error('Error fetching invoice:', error);
+    return null;
   }
+  return data;
+}
+
+async function getCustomers(supabase: any) {
+  const { data, error } = await supabase.from('customers').select('*');
+  if (error) {
+    console.error('Error fetching customers:', error);
+    return [];
+  }
+  return data;
+}
+
+async function getOrganization(supabase: any, userId: string) {
+    const { data: orgData, error: orgError } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', userId)
+      .single();
+    if (orgError || !orgData.organization_id) {
+      return null;
+    }
+    const { data: org, error: orgDetailsError } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', orgData.organization_id)
+      .single();
+    if (orgDetailsError) {
+      return null;
+    }
+    return org;
+}
+
+export default async function EditInvoicePage({ params }: { params: { id: string } }) {
+  const supabase = getServerSupabase();
+  const user = await getUser();
+  const userRole = await getUserRole();
+
+  if (!user || userRole === 'customer') {
+    return (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+            <h1 className="text-2xl font-bold">Not Authorized</h1>
+            <p>You do not have permission to view this page.</p>
+        </div>
+    );
+  }
+
+  const [invoice, customers, organization] = await Promise.all([
+    getInvoice(params.id, supabase),
+    getCustomers(supabase),
+    getOrganization(supabase, user.id)
+  ]);
 
   if (!invoice) {
-    return <div className="flex justify-center items-center h-screen">Could not load invoice to edit.</div>;
+    notFound();
   }
 
-  return <InvoiceForm initialInvoice={invoice} user={user} customers={customers} organization={organization} />;
+  return <InvoiceForm initialInvoice={invoice as Invoice} user={user as User} customers={customers as Customer[]} organization={organization as Organization} />;
 }

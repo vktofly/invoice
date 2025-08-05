@@ -1,30 +1,15 @@
 import { Invoice, InvoiceItem } from '@/lib/types';
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
+import { getUserRole } from '@/lib/supabase/server-utils';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   const { id } = params;
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
-      },
-    }
-  );
+  const supabase = createSupabaseServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -53,15 +38,15 @@ export async function GET(
   }
 
   // Authorization Check
-  if (invoice.owner !== user.id) {
-    // Also check if user is a customer for this invoice
+  const userRole = await getUserRole();
+  if (userRole === 'customer') {
     const { data: customer, error: customerError } = await supabase
       .from('customers')
-      .select('id, user_id')
+      .select('id, auth_user_id')
       .eq('id', invoice.customer_id)
       .single();
 
-    if (customerError || !customer || customer.user_id !== user.id) {
+    if (customerError || !customer || customer.auth_user_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
   }
@@ -102,27 +87,16 @@ export async function PUT(
     ...restOfInvoiceData
   } = invoiceData;
 
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
-      },
-    }
-  );
+  const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  const userRole = await getUserRole();
+  if (userRole === 'customer') {
+    return NextResponse.json({ error: 'Forbidden: Customers cannot edit invoices.' }, { status: 403 });
   }
 
   // Authorization: Check if the user belongs to the organization
@@ -251,27 +225,16 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   const { id } = params;
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
-      },
-    }
-  );
+  const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  const userRole = await getUserRole();
+  if (userRole === 'customer') {
+    return NextResponse.json({ error: 'Forbidden: Customers cannot delete invoices.' }, { status: 403 });
   }
 
   // Optional: Check if the invoice exists and belongs to the user

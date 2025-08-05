@@ -1,16 +1,28 @@
-import { createClient } from '@/lib/supabase/server';
+// Import necessary libraries and components.
+// createSupabaseServerClient is used for server-side Supabase interactions.
+// notFound is a Next.js function to render a 404 page.
+// Heroicons are used for UI icons.
+// Link is used for client-side navigation.
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { EnvelopeIcon, PhoneIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
+/**
+ * Fetches detailed data for a specific customer from the Supabase database.
+ * @param id - The unique identifier of the customer to fetch.
+ * @returns A promise that resolves to the customer's data.
+ * If the customer is not found or an error occurs, it triggers a 404 page.
+ */
 async function getCustomerData(id: string) {
-  const supabase = createClient();
+  const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
     .from('customers')
     .select('*')
     .eq('id', id)
     .single();
 
+  // If there's an error or no data is returned, log the error and show a 404 page.
   if (error || !data) {
     console.error('Failed to fetch customer:', error);
     notFound();
@@ -18,6 +30,12 @@ async function getCustomerData(id: string) {
   return data;
 }
 
+/**
+ * A reusable component to display a single detail item in a structured layout.
+ * It consists of a label and a value, arranged in a grid for alignment.
+ * @param label - The title of the detail (e.g., "Customer Type").
+ * @param value - The value of the detail to display. If null or undefined, it defaults to 'N/A'.
+ */
 const DetailItem = ({ label, value }: { label: string, value: string | number | null | undefined }) => (
   <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
     <dt className="text-sm font-medium text-gray-500">{label}</dt>
@@ -25,6 +43,11 @@ const DetailItem = ({ label, value }: { label: string, value: string | number | 
   </div>
 );
 
+/**
+ * A component to render a formatted address block.
+ * @param title - The title for the address block (e.g., "Billing Address").
+ * @param address - An object containing the address details.
+ */
 const AddressDetail = ({ title, address }: { title: string, address: any }) => (
   <div>
     <h3 className="text-lg font-medium leading-6 text-gray-900">{title}</h3>
@@ -39,12 +62,19 @@ const AddressDetail = ({ title, address }: { title: string, address: any }) => (
   </div>
 );
 
+/**
+ * The main page component for displaying a single customer's profile.
+ * This is a server component, so it fetches data directly on the server.
+ * @param params - The page parameters, containing the customer's ID from the URL.
+ */
 export default async function CustomerProfilePage({ params }: { params: { id: string } }) {
+  // Fetch the customer data based on the ID from the URL.
   const customer = await getCustomerData(params.id);
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
       <div className="bg-white rounded-xl border shadow-lg overflow-hidden">
+        {/* Header Section: Displays customer's name, company, and an edit button. */}
         <div className="p-6 bg-gray-50 border-b">
           <div className="flex justify-between items-start">
             <div>
@@ -55,6 +85,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
                 Edit Customer
             </Link>
           </div>
+          {/* Contact Information Section */}
           <div className="mt-4 flex items-center space-x-6 text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <EnvelopeIcon className="h-5 w-5" />
@@ -75,6 +106,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
           </div>
         </div>
 
+        {/* Core Details Section: Displays primary contact, currency, payment terms, etc. */}
         <div className="p-6">
           <dl className="divide-y divide-gray-200">
             <DetailItem label="Customer Type" value={customer.customer_type} />
@@ -84,6 +116,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
           </dl>
         </div>
         
+        {/* Address Section: Displays billing and shipping addresses side-by-side. */}
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 border-t">
           <AddressDetail title="Billing Address" address={{
             attention: customer.billing_attention,
@@ -107,6 +140,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
           }}/>
         </div>
 
+        {/* Financial & Tax Information Section */}
         <div className="p-6 border-t">
             <h3 className="text-lg font-medium leading-6 text-gray-900">Financial & Tax Information</h3>
             <dl className="mt-4 divide-y divide-gray-200">
@@ -115,7 +149,7 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
             </dl>
         </div>
 
-        {/* Placeholder for invoices list */}
+        {/* Placeholder for future implementation of an invoices list for the customer. */}
         <div className="p-6 border-t">
             <h3 className="text-lg font-medium leading-6 text-gray-900">Invoices</h3>
             <p className="mt-2 text-sm text-gray-500">A list of invoices for this customer will be displayed here.</p>
@@ -123,4 +157,4 @@ export default async function CustomerProfilePage({ params }: { params: { id: st
       </div>
     </div>
   );
-} 
+}

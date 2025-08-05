@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { getRecurringInvoiceById } from '@/lib/supabase/recurring_invoices';
 import { getNextInvoiceNumber } from '@/lib/supabase/invoices';
@@ -11,23 +11,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Recurring invoice ID is required' }, { status: 400 });
   }
 
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
-      },
-    }
-  );
+  const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -90,3 +74,4 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json(createdInvoice);
 }
+

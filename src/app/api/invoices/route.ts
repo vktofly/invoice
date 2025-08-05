@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 import { Invoice, InvoiceItem } from '@/lib/types';
 
@@ -9,23 +9,7 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get('status');
   const customerId = searchParams.get('customer');
 
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
-      },
-    }
-  );
+  const supabase = createSupabaseServerClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
@@ -87,23 +71,7 @@ export async function POST(request: NextRequest) {
     ...restOfInvoiceData
   } = invoiceData;
 
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
-      },
-    }
-  );
+  const supabase = createSupabaseServerClient();
 
   const {
     data: { user },
@@ -115,6 +83,21 @@ export async function POST(request: NextRequest) {
       { error: 'Authentication required' },
       { status: 401 }
     );
+
+  // Get user's organization ID from their profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !profile || !profile.organization_id) {
+    console.error('Failed to get user profile or organization ID:', profileError);
+    return NextResponse.json(
+      { error: 'User profile is not configured with an organization.' },
+      { status: 400 } // Bad Request, as the user setup is incomplete
+    );
+  }
 
   // If number is missing or empty, generate a new one
   let number = invoiceData.number;
@@ -178,6 +161,7 @@ export async function POST(request: NextRequest) {
     ...restOfInvoiceData, 
     number, 
     owner: user.id, 
+    organization_id: profile.organization_id,
     currency: currency || 'USD',
     billing_address_id,
     shipping_address_id,

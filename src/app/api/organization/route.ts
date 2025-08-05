@@ -1,9 +1,10 @@
-import { createClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const supabase = createClient(cookies());
+  const supabase = createSupabaseServerClient();
+
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -24,7 +25,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createClient(cookies());
+  const supabase = createSupabaseServerClient();
+
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -48,7 +50,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = createClient(cookies());
+  const supabase = createSupabaseServerClient();
+
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -79,7 +82,8 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabase = createClient(cookies());
+  const supabase = createSupabaseServerClient();
+
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -105,3 +109,5 @@ export async function DELETE(request: NextRequest) {
 
   return new NextResponse(null, { status: 204 });
 }
+
+

@@ -1,47 +1,35 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { User } from '@supabase/supabase-js';
 
-export async function getServerSupabase() {
-  const cookieStore = cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // The `set` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-          }
-        },
-        remove(name: string, options) {
-          try {
-            cookieStore.set({ name, value: '', ...options });
-          } catch (error) {
-            // The `delete` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-          }
-        },
-      },
-    }
-  );
-}
+export const getServerSupabase = createSupabaseServerClient;
 
 export async function getUser(): Promise<User | null> {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error) {
+    console.error('Error getting user:', error.message);
+    return null;
+  }
+
+  return data.user;
 }
 
 export async function getUserRole(): Promise<string | null> {
   const user = await getUser();
-  return user?.user_metadata?.role || null;
+  if (!user) return null;
+
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error) {
+    console.error('Error getting user role:', error.message);
+    return null;
+  }
+
+  return data.role;
 }
