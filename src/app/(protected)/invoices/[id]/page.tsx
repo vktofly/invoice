@@ -9,14 +9,15 @@ type Invoice = Database['public']['Tables']['invoices']['Row'];
 type Customer = Database['public']['Tables']['customers']['Row'];
 type InvoiceItem = Database['public']['Tables']['invoice_items']['Row'];
 
-async function getInvoice(id: string): Promise<(Invoice & { customer: Customer | null; invoice_items: InvoiceItem[] }) | null> {
+async function getInvoice(id: string): Promise<(Invoice & { customer: Customer | null; invoice_items: InvoiceItem[], organization: any | null }) | null> {
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
     .from('invoices')
     .select(`
       *,
       customer:customers (*),
-      invoice_items (*)
+      invoice_items (*),
+      organization:organizations (*)
     `)
     .eq('id', id)
     .single();
@@ -35,10 +36,6 @@ async function getInvoice(id: string): Promise<(Invoice & { customer: Customer |
 
 export default async function InvoiceDetailPage({ params }: { params: { id: string } }) {
   const invoice = await getInvoice(params.id);
-
-  if (!invoice) {
-    notFound();
-  }
 
   if (!invoice) {
     notFound();
@@ -63,6 +60,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
           billing_address={invoice.customer?.address}
           shipping_address={invoice.customer?.address}
           customer={invoice.customer}
+          organization={invoice.organization}
           // The following props are calculated in the InvoiceTemplate, so we can pass dummy values
           subtotal={0}
           totalItemDiscount={0}
